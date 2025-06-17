@@ -33,46 +33,46 @@ An opinionated Laravel starter kit tailored for rapid development, built by Jona
 1. **Fork and clone the repository to local environment**
 
 Example
-   ```bash
-   git clone git@github.com:jonasvanderhaegen/laravel-boilerplate.git project
-   cd mroject
-   ```
+```bash
+  git clone git@github.com:jonasvanderhaegen/laravel-boilerplate.git project
+  cd mroject
+```
 
 2. **Run the installer script**
 
 > [!TIP]
 > please keep your attention to terminal because there'll be some offering prompts.
 
-    * **macOS / Linux / WSL**
+* **macOS / Linux / WSL**
 
-      ```bash
-      ./scripts/sail.sh
-      ```
-    * **Windows (CMD/PowerShell/Git Bash)**
+```bash
+  ./scripts/sail.sh
+```
+* **Windows (CMD/PowerShell/Git Bash)**
 
-      ```bash
-      ./scripts/sail.bat
-      ```
+```bash
+  ./scripts/sail.bat
+```
 
-   The script will:
+The script will:
 
-    * Set up docker container with services php 8.4, composer, valkey, mailpit, postgres SQL [and more services can be added by yourself](https://laravel.com/docs/master/sail)
-    * Copy `.env.example` → `.env`
-    * Install Composer & NPM dependencies
-    * Generate `APP_KEY`
-    * Optionally run database migrations & seeders
-    * Configure Sail aliases
+  1. Set up docker container with services php 8.4, composer, valkey, mailpit, postgres SQL [and more services can be added by yourself](https://laravel.com/docs/master/sail)
+  2. Copy `.env.example` → `.env`
+  3. Install Composer & NPM dependencies 
+  4. Generate `APP_KEY`
+  5. Optionally run database migrations & seeders 
+  6. Configure Sail aliases
 
-   ```bash
+ ```bash
    # Example aliases added to your shell:
-   alias s='sail'
-   alias sc='sail composer'
-   alias sa='sail artisan'
-   alias smf='sail artisan migrate:fresh --seed'
-   alias sup='sail up -d'
-   alias sus='sail stop'
-   alias sr='sail composer run dev'
-   ```
+  alias s='sail'
+  alias sc='sail composer'
+  alias sa='sail artisan'
+  alias smf='sail artisan migrate:fresh --seed'
+  alias sup='sail up -d'
+  alias sus='sail stop'
+  alias sr='sail composer run dev'
+ ```
 
 3. **Access the application**
 
@@ -83,7 +83,7 @@ Example
 
 ## Aliases & Scripts
 
-### Sail commands for Beginners
+#### Sail commands for Beginners
 
 | Alias | Command                             | Description                       |
 |-------|-------------------------------------|-----------------------------------|
@@ -97,18 +97,24 @@ Example
 | `sr`  | `sail composer run dev`             | Build frontend assets             |
 
 
-### Explaining the Composer Scripts for Beginners
+#### Explaining the Composer Scripts for Beginners
 
-| Script               | Description                                                                                                                                  |
-|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `rector`             | Applies automated code refactoring rules to modernize or fix your PHP codebase using the [Rector tool](https://github.com/rectorphp/rector). |
-| `lint`               | Runs Laravel Pint to check and automatically fix PHP code style issues according to the configured Pint rules.                               |
-| `test:rector`        | Performs a dry run of Rector, showing which changes *would* be made without modifying any files.                                             |
-| `test:lint`          | Executes Pint in test mode to report any style violations without applying fixes.                                                            |
-| `test:types`         | Runs PHPStan static analysis to detect type errors and potential bugs using the `phpstan.neon` configuration.                                |
-| `test:unit`          | Executes unit tests with Pest—running in parallel, showing colors, and enforcing 100% code coverage.                                         |
-| `test:type-coverage` | Measures type coverage with Pest, ensuring every function and method has type annotations and checks.                                        |
-| `test`               | Composite command that does all above together                                                                                               |
+| Script                  | Description                                                                                                                                  |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| `sc rector`             | Applies automated code refactoring rules to modernize or fix your PHP codebase using the [Rector tool](https://github.com/rectorphp/rector). |
+| `sc lint`               | Runs Laravel Pint to check and automatically fix PHP code style issues according to the configured Pint rules.                               |
+| `sc test:rector`        | Performs a dry run of Rector, showing which changes *would* be made without modifying any files.                                             |
+| `sc test:lint`          | Executes Pint in test mode to report any style violations without applying fixes.                                                            |
+| `sc test:types`         | Runs PHPStan static analysis to detect type errors and potential bugs using the `phpstan.neon` configuration.                                |
+| `sc test:unit`          | Executes unit tests with Pest—running in parallel, showing colors, and enforcing 100% code coverage.                                         |
+| `sc test:type-coverage` | Measures type coverage with Pest, ensuring every function and method has type annotations and checks.                                        |
+| `sc test`               | Composite command that does all above together                                                                                               |
+
+#### Explaining added module custom artisan commands for Beginners
+
+| Script                  | Short  |                                                                                      Description                                                                                      |
+|-------------------------|--------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| sail artisan core:reset | sa c:r | migrate:fresh --seed, module:seed with cache cleared. It does not seed for modules with migrate:fresh<br> You can add whatever to this command, for example artisan scout:import, etc |
 
 ---
 
