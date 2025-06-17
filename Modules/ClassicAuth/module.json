@@ -1,0 +1,11 @@
+{
+    "name": "ClassicAuth",
+    "alias": "classicauth",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\ClassicAuth\\Providers\\PrimaryServiceProvider"
+    ],
+    "files": []
+}

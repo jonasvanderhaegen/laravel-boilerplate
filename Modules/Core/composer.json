@@ -7,9 +7,7 @@
             "email": "jonasvanderh@gmail.com"
         }
     ],
-    "scripts" : {
-        "core:hello": [""]
-    },
+    "scripts" : {},
     "require": {
         "nwidart/laravel-modules": "^12.0",
         "jenssegers/agent": "^2.6",

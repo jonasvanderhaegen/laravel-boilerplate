@@ -1,0 +1,30 @@
+{
+    "name": "project/classicauth",
+    "description": "",
+    "authors": [
+        {
+            "name": "",
+            "email": ""
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\ClassicAuth\\": "app/",
+            "Modules\\ClassicAuth\\Database\\Factories\\": "database/factories/",
+            "Modules\\ClassicAuth\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\ClassicAuth\\Tests\\": "tests/"
+        }
+    }
+}

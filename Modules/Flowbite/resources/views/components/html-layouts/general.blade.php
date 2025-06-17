@@ -28,7 +28,6 @@
         </x-flowbite::body-layouts.default>
 
         @livewireScripts
-
         {{-- Vite JS --}}
         @vite(['resources/ts/app.ts'])
     </body>
