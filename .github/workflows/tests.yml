@@ -10,11 +10,6 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    env:
-      SCOUT_DRIVER: meilisearch
-      SCOUT_QUEUE: true
-      MEILISEARCH_HOST: http://127.0.0.1:7700
-      MEILISEARCH_KEY: G6oifHLMJ6skToyN9fwgMZLbvqxxwgaUrw9f8eOVB7s
 
     strategy:
       max-parallel: 3
@@ -22,18 +17,6 @@ jobs:
         php: [ 8.4 ]
 
     services:
-
-      meilisearch:
-        image: getmeili/meilisearch:v1.15.0-rc.4
-        env:
-          MEILI_MASTER_KEY: G6oifHLMJ6skToyN9fwgMZLbvqxxwgaUrw9f8eOVB7s
-        ports:
-          - 7700:7700
-        options: >-
-          --health-cmd="curl -f http://localhost:7700/health || exit 1"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=20
 
       redis:
         image: redis:7.4
@@ -51,7 +34,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '24'
+          node-version: '22'
 
       - name: Setup PHP Environment
         uses: ./.github/actions/setup
@@ -80,18 +63,5 @@ jobs:
       - name: module seed
         run: php artisan module:seed --all
 
-      - name: Create meilisearch index
-        run: php artisan scout:import "Modules\Profile\Models\Profile"
-
-      - name: Sync configured index settings with search engine (Meilisearch)
-        run: php artisan scout:sync-index-settings
-
       - name: Run Tests
         run: composer test
-
-      - name: Deploy coverage to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./tests/Coverage/html
-          publish_branch: gh-pages

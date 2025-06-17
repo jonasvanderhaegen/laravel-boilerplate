@@ -36,11 +36,6 @@
         </exclude>
     </source>
     <php>
-        <env name="MEILISEARCH_KEY" value="G6oifHLMJ6skToyN9fwgMZLbvqxxwgaUrw9f8eOVB7s"/>
-        <env name="SCOUT_DRIVER" value="meilisearch"/>
-        <env name="MEILISEARCH_HOST" value="http://localhost:7700"/>
-        <env name="SCOUT_QUEUE" value="true"/>
-        <env name="SCOUT_PREFIX" value="worker${PARALLEL_TEST_TOKEN}_"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
@@ -52,6 +47,6 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
-        <env name="RAY_ENABLED" value="true"/>
+        <env name="RAY_ENABLED" value="false"/>
     </php>
 </phpunit>
