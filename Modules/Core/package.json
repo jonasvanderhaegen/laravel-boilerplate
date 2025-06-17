@@ -1,4 +1,25 @@
 {
-  "private": true,
-  "type": "module"
+    "name": "@project/core-module",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "format": "npx prettier --write ../../resources/; npx prettier --write ../../Modules/*/resources/views"
+    },
+    "dependencies": {
+        "@types/node": "^22.15.29",
+        "@fontsource/poppins": "^5.2.6",
+        "@simplewebauthn/browser": "^13.1.0",
+        "@tailwindcss/postcss": "^4.1.7",
+        "@tailwindcss/typography": "^0.5.16",
+        "autoprefixer": "^10.4.21",
+        "motion": "^12.12.1",
+        "number-flow": "^0.5.7",
+        "postcss": "^8.5.3",
+    "typescript": "^5.8.3"
+    },
+    "devDependencies": {
+        "prettier-plugin-blade": "^2.1.21",
+        "prettier-plugin-tailwindcss": "^0.6.11",
+        "prettier": "^3.5.3"
+    }
 }

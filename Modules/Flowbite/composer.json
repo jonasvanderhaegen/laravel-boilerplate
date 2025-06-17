@@ -1,0 +1,30 @@
+{
+    "name": "project/flowbite",
+    "description": "",
+    "authors": [
+        {
+            "name": "Jonas Vanderhaegen",
+            "email": "jonasvanderh@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Flowbite\\": "app/",
+            "Modules\\Flowbite\\Database\\Factories\\": "database/factories/",
+            "Modules\\Flowbite\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Flowbite\\Tests\\": "tests/"
+        }
+    }
+}

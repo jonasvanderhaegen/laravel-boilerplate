@@ -1,0 +1,11 @@
+{
+    "name": "Flowbite",
+    "alias": "flowbite",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Flowbite\\Providers\\PrimaryServiceProvider"
+    ],
+    "files": []
+}

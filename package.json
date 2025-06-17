@@ -2,9 +2,13 @@
     "$schema": "https://json.schemastore.org/package.json",
     "private": true,
     "type": "module",
+    "workspaces": [
+        "Modules/*"
+    ],
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "core:format": "npm run format --workspace=@project/core-module"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

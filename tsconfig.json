@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["resources/ts/*"],
+            "Modules/*": ["Modules/*/resources/assets/ts"]
+        },
+        "types": ["vite/client"]
+    },
+    "include": [
+        "resources/ts/**/*.ts",
+        "Modules/**/resources/assets/ts/**/*.ts",
+        "env.d.ts" // see below
+    ],
+    "exclude": ["node_modules", "public"]
+}

@@ -2,29 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Modules\Core\Providers;
+namespace Modules\Flowbite\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Concerns\PrimaryServiceProviderFunctions;
-use Modules\Core\Console\Refresh;
 
 final class PrimaryServiceProvider extends ServiceProvider
 {
     use PrimaryServiceProviderFunctions;
 
-    protected string $name = 'Core';
+    protected string $name = 'Flowbite';
 
-    protected string $nameLower = 'core';
+    protected string $nameLower = 'flowbite';
 
     /**
      * Boot the application events.
      */
     public function boot(): void
     {
-        $this->registerCommands();
-        $this->registerCommandSchedules();
         $this->registerTranslations();
         $this->registerConfig();
+        $this->registerViews();
     }
 
     /**
@@ -34,19 +32,4 @@ final class PrimaryServiceProvider extends ServiceProvider
     {
         $this->app->register(RouteServiceProvider::class);
     }
-
-    /**
-     * Register commands in the format of Command::class
-     */
-    protected function registerCommands(): void
-    {
-        $this->commands([
-            Refresh::class,
-        ]);
-    }
-
-    /**
-     * Register command Schedules.
-     */
-    protected function registerCommandSchedules(): void {}
 }
