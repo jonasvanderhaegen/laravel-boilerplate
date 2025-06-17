@@ -1,5 +1,5 @@
-
-[![Dockerized Setup](https://img.shields.io/badge/Dockerized%20Setup-Ready-blue?logo=docker\&logoColor=white)](https://docs.docker.com/get-docker/)
+[![Tests](https://github.com/jonasvanderhaegen/laravel-boilerplate/actions/workflows/tests.yml/badge.svg)](https://github.com/jonasvanderhaegen/laravel-boilerplate/actions/workflows/tests.yml)
+![Version - alpha](https://img.shields.io/badge/Version-alpha-blue) [![Dockerized Setup](https://img.shields.io/badge/Dockerized%20Setup-Ready-blue?logo=docker\&logoColor=white)](https://docs.docker.com/get-docker/)
 
 ### 🧭 Initialization
 
