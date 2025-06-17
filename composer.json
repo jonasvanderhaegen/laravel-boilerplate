@@ -16,8 +16,8 @@
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
-        "laravel/sail": "^1.41",
         "laravel/pint": "^1.13",
+        "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "pestphp/pest": "^3.8",
@@ -55,14 +55,31 @@
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
         ],
+        "rector": "rector",
+        "lint": "./vendor/bin/pint",
+        "test:rector": "rector --dry-run",
+        "test:lint": "./vendor/bin/pint --test",
+        "test:types": "./vendor/bin/phpstan analyse --no-progress --configuration=phpstan.neon --memory-limit=2G",
+        "test:unit": "./vendor/bin/pest --colors=always --parallel --coverage --exactly=100",
+        "test:type-coverage": "./vendor/bin/pest --type-coverage --min=100",
         "test": [
             "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "@test:type-coverage",
+            "@test:rector",
+            "@test:lint",
+            "@test:types",
+            "@test:unit"
         ]
     },
     "extra": {
         "laravel": {
             "dont-discover": []
+        },
+        "merge-plugin": {
+            "merge-scripts": true,
+            "include": [
+                "Modules/*/composer.json"
+            ]
         }
     },
     "config": {
@@ -71,7 +88,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "wikimedia/composer-merge-plugin": true
         }
     },
     "minimum-stability": "stable",

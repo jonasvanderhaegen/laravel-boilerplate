@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Modules\Core\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use Modules\Core\Concerns\PrimaryServiceProviderFunctions;
+
+final class PrimaryServiceProvider extends ServiceProvider
+{
+    use PrimaryServiceProviderFunctions;
+
+    protected string $name = 'Core';
+
+    protected string $nameLower = 'core';
+
+    /**
+     * Boot the application events.
+     */
+    public function boot(): void
+    {
+        $this->registerCommands();
+        $this->registerCommandSchedules();
+        $this->registerTranslations();
+        $this->registerConfig();
+    }
+
+    /**
+     * Register the service provider.
+     */
+    public function register(): void
+    {
+        $this->app->register(EventServiceProvider::class);
+        $this->app->register(RouteServiceProvider::class);
+    }
+
+    /**
+     * Register commands in the format of Command::class
+     */
+    protected function registerCommands(): void {}
+
+    /**
+     * Register command Schedules.
+     */
+    protected function registerCommandSchedules(): void {}
+}

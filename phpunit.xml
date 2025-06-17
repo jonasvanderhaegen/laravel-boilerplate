@@ -4,7 +4,16 @@
          bootstrap="vendor/autoload.php"
          colors="true"
 >
+    <coverage>
+        <report>
+            <html outputDirectory="./tests/Coverage/html"/>
+        </report>
+    </coverage>
     <testsuites>
+        <testsuite name="Modules">
+            <directory suffix="Test.php">./Modules/*/tests/Feature</directory>
+            <directory suffix="Test.php">./Modules/*/tests/Unit</directory>
+        </testsuite>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
         </testsuite>
@@ -15,18 +24,34 @@
     <source>
         <include>
             <directory>app</directory>
+            <directory suffix=".php">./Modules</directory>
         </include>
+        <exclude>
+            <directory suffix=".php">./Modules/*/config</directory>
+            <directory suffix=".php">./Modules/*/database</directory>
+            <directory suffix=".php">./Modules/*/resources</directory>
+            <directory suffix=".php">./Modules/*/routes</directory>
+            <directory suffix=".php">./Modules/*/tests</directory>
+            <directory suffix=".php">./Modules/*/lang</directory>
+        </exclude>
     </source>
     <php>
+        <env name="MEILISEARCH_KEY" value="G6oifHLMJ6skToyN9fwgMZLbvqxxwgaUrw9f8eOVB7s"/>
+        <env name="SCOUT_DRIVER" value="meilisearch"/>
+        <env name="MEILISEARCH_HOST" value="http://localhost:7700"/>
+        <env name="SCOUT_QUEUE" value="true"/>
+        <env name="SCOUT_PREFIX" value="worker${PARALLEL_TEST_TOKEN}_"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_DATABASE" value="testing"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="RAY_ENABLED" value="true"/>
     </php>
 </phpunit>
