@@ -6,6 +6,7 @@ namespace Modules\Core\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Modules\Core\Concerns\PrimaryServiceProviderFunctions;
+use Modules\Core\Console\Refresh;
 
 final class PrimaryServiceProvider extends ServiceProvider
 {
@@ -38,7 +39,12 @@ final class PrimaryServiceProvider extends ServiceProvider
     /**
      * Register commands in the format of Command::class
      */
-    protected function registerCommands(): void {}
+    protected function registerCommands(): void
+    {
+        $this->commands([
+            Refresh::class,
+        ]);
+    }
 
     /**
      * Register command Schedules.

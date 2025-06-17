@@ -5,6 +5,16 @@
          colors="true"
 >
     <coverage>
+        <include>
+            <!-- only include your app & modules code -->
+            <directory suffix=".php">./app</directory>
+            <directory suffix=".php">./Modules</directory>
+        </include>
+        <exclude>
+            <!-- exclude all test files -->
+            <directory suffix=".php">./tests</directory>
+            <directory suffix=".php">./Modules/*/tests</directory>
+        </exclude>
         <report>
             <html outputDirectory="./tests/Coverage/html"/>
         </report>

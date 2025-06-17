@@ -1,92 +1,143 @@
-[![Tests](https://github.com/jonasvanderhaegen/laravel-boilerplate/actions/workflows/tests.yml/badge.svg)](https://github.com/jonasvanderhaegen/laravel-boilerplate/actions/workflows/tests.yml)
-![Version - alpha](https://img.shields.io/badge/Version-alpha-blue) [![Dockerized Setup](https://img.shields.io/badge/Dockerized%20Setup-Ready-blue?logo=docker\&logoColor=white)](https://docs.docker.com/get-docker/)
+## [![Tests](https://github.com/jonasvanderhaegen/laravel-boilerplate/actions/workflows/tests.yml/badge.svg)](https://github.com/jonasvanderhaegen/laravel-boilerplate/actions/workflows/tests.yml) ![Version](https://img.shields.io/badge/Version-alpha-blue) [![Docker Ready](https://img.shields.io/badge/Docker-ready-blue?logo=docker\&logoColor=white)](https://docs.docker.com/get-docker/)
 
-### 🧭 Initialization
+# Laravel Boilerplate
 
-Docker-only setup for new developers (Just have docker installed)<br>
-TLDR: Clone repository, Set up local environment. [For more details read here](docs/start/init.md) <br>
-FYI: An alias is like a shortcut or nickname you create for a longer command you don’t want to type over and over again.
+An opinionated Laravel starter kit tailored for rapid development, built by Jonas Vanderhaegen. Includes Docker-based setup, Livewire SPA scaffolding, modular architecture, and more.
 
-🪟 **On Windows** (CMD, Git Bash, or PowerShell):
-```bash
-./scripts/sail.bat
-```
-
-🍎 **On macOS / Linux / WSL:**
-  ```bash
-./scripts/sail.sh
-```
-
-Source the target file as mentioned in terminal or close and re-open terminal in case it or you added aliases to your terminal.<br>
-Then you can run the following, it will compile frontend assets, run queue worker in background, etc. 
-
-```bash
-# Compile frontend assets with vite, run queue worker, etc
-./vendor/bin/sail composer run dev
-# or
-sail composer run dev
-sr
-```
-CTRL + X to close this process
+> [!IMPORTANT]
+> **Note:** This boilerplate reflects my personal preferences and workflow. Pull requests are welcome, though changes may be opinionated.<br>
+> For mid to large size projects I just tend to work more modular than all together.
 
 ---
 
-🛳️ Optional: [Create a sail alias (recommended)](docs/start/alias.md) to avoid typing ./vendor/bin/sail every time. <br>
-With initialization for mac users this was prompted. If you said yes it's already done for you.
+## Features
 
-```bash
-s     = sail
-sc    = sail composer
-sa    = sail artisan
-sm    = sail artisan migrate
-smf   = sail artisan migrate:fresh
-smfs  = sail artisan migrate:fresh --seed
-
-# Start docker container if down
-sup   = sail up -d
-
-# Stop docker containerr
-sus   = sail stop
-
-# Start process of vite
-sr    = sail composer run dev
-```
----
-
-### 🧭 Docker
-
-In case you already initialized project
-
-```bash
-# Docker container's down? Start container like this in the background
-
-./vendor/bin/sail up -d
-# or with alias
-sail up -d
-sup
-```
-
-```bash
-# Want to bring docker container's down? Stop container like this
-
-./vendor/bin/sail stop
-# or with alias
-sail down
-sus
-```
-
-```bash
-# Compile frontend assets with vite, run queue worker, etc
-./vendor/bin/sail composer run dev
-# or with alias
-sail composer run dev
-sc run dev
-sr
-```
+* **Docker-Only Setup**: Run without installing PHP, Composer, Node, or NPM locally.
+* **Livewire SPA**: Single-page application powered by Laravel Livewire and Flowbite.
+* **Modular Architecture**: Built-in support for modules (*Core*, Auth, Onboarding, etc.).
+* **Custom Scripts**: One-command installation & environment setup.
+* **GitHub Actions**: CI for tests, type coverage, and performance optimized workflows.
+* **Modern Services**: Postgres, Valkey (Redis replacement), Mailpit for dev email.
 
 ---
 
-#### Connections with GUI
-When docker container is running you can connect to PGSQL, Valkey (Redis) with a database client GUI.
+## Prerequisites
+
+* Docker & Docker Compose installed. [Get Docker](https://docs.docker.com/get-docker/)
+* (Optional) Git client
 
 ---
+
+## Quick Start
+
+1. **Fork and clone the repository to local environment**
+
+Example
+   ```bash
+   git clone git@github.com:jonasvanderhaegen/laravel-boilerplate.git project
+   cd mroject
+   ```
+
+2. **Run the installer script**
+
+> [!TIP]
+> please keep your attention to terminal because there'll be some offering prompts.
+
+    * **macOS / Linux / WSL**
+
+      ```bash
+      ./scripts/sail.sh
+      ```
+    * **Windows (CMD/PowerShell/Git Bash)**
+
+      ```bash
+      ./scripts/sail.bat
+      ```
+
+   The script will:
+
+    * Set up docker container with services php 8.4, composer, valkey, mailpit, postgres SQL [and more services can be added by yourself](https://laravel.com/docs/master/sail)
+    * Copy `.env.example` → `.env`
+    * Install Composer & NPM dependencies
+    * Generate `APP_KEY`
+    * Optionally run database migrations & seeders
+    * Configure Sail aliases
+
+   ```bash
+   # Example aliases added to your shell:
+   alias s='sail'
+   alias sc='sail composer'
+   alias sa='sail artisan'
+   alias smf='sail artisan migrate:fresh --seed'
+   alias sup='sail up -d'
+   alias sus='sail stop'
+   alias sr='sail composer run dev'
+   ```
+
+3. **Access the application**
+
+    * Frontend: `http://localhost`
+    * Mailpit: `http://localhost:8025`
+
+---
+
+## Aliases & Scripts
+
+### Sail commands for Beginners
+
+| Alias | Command                             | Description                       |
+|-------|-------------------------------------|-----------------------------------|
+| `s`   | `sail`                              | Wrapper for Sail commands         |
+| `sc`  | `sail composer`                     | Run Composer inside the container |
+| `sa`  | `sail artisan`                      | Run Artisan inside the container  |
+| `sm`  | `sail artisan migrate`              | Run migrations                    |
+| `smf` | `sail artisan migrate:fresh --seed` | Reset database and seed           |
+| `sup` | `sail up -d`                        | Start containers in detached mode |
+| `sus` | `sail stop`                         | Stop containers                   |
+| `sr`  | `sail composer run dev`             | Build frontend assets             |
+
+
+### Explaining the Composer Scripts for Beginners
+
+| Script               | Description                                                                                                                                  |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| `rector`             | Applies automated code refactoring rules to modernize or fix your PHP codebase using the [Rector tool](https://github.com/rectorphp/rector). |
+| `lint`               | Runs Laravel Pint to check and automatically fix PHP code style issues according to the configured Pint rules.                               |
+| `test:rector`        | Performs a dry run of Rector, showing which changes *would* be made without modifying any files.                                             |
+| `test:lint`          | Executes Pint in test mode to report any style violations without applying fixes.                                                            |
+| `test:types`         | Runs PHPStan static analysis to detect type errors and potential bugs using the `phpstan.neon` configuration.                                |
+| `test:unit`          | Executes unit tests with Pest—running in parallel, showing colors, and enforcing 100% code coverage.                                         |
+| `test:type-coverage` | Measures type coverage with Pest, ensuring every function and method has type annotations and checks.                                        |
+| `test`               | Composite command that does all above together                                                                                               |
+
+---
+
+## Modules & Roadmap
+
+* **Core**: Rate limiters, mobile/desktop detection, base user features.
+* **Auth**: Classic pages (login, register, forgot/reset), email verification.
+* **Onboarding** (coming soon)
+* **Profile Settings** (coming soon)
+* **WebAuthn**: Passkeys support (planned)
+* **Sharding**: Horizontal database scaling (planned)
+* **IDE helper files**: For Visual Studio Code, Submit 3, PhpStorm
+
+Contributions and suggestions are welcome! See [Contributing](#contributing).
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/name`
+3. Commit changes: `git commit -m "Add new feature"`
+4. Push branch: `git push origin feature/name`
+5. Open a Pull Request
+
+Please adhere to PSR, follow Laravel conventions, and include tests where applicable.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](https://opensource.org/licenses/MIT) for details.
