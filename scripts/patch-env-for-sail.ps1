@@ -29,35 +29,49 @@ $patches = @(
 
 $content = Get-Content $envPath
 $modified = $false
+# … earlier in the script …
+
+
 
 foreach ($patch in $patches) {
-    $key = $patch.Key
-    $old = $patch.Old
-    $new = $patch.New
-    $matchPattern = "^\s*${key}=(.*)"
+ $key = $patch.key
+ $old = $patch.old
+ $new = $patch.new
 
-    $matchedLine = $content | Where-Object { $_ -match $matchPattern }
 
-    if ($matchedLine) {
-        $currentValue = ($matchedLine -replace $matchPattern, '$1').Trim()
 
-        if ($currentValue -eq $old -or $old -eq "") {
-            Write-Host "🔁 Updating $key ($currentValue → $new)"
-            $content = $content -replace $matchPattern, "$key=$new"
-            $modified = $true
-        } else {
-            Write-Host "⏭  Skipping $key (custom value: $currentValue)"
-        }
-    } else {
-        Write-Host "➕ Adding $key=$new"
-        $content += "$key=$new"
-        $modified = $true
-    }
+ $matchPattern = "^(?:$key=)(.*)$"
+ $matchedLine = [regex]::Match($content, $matchPattern, [System.Text.RegularExpressions.RegexOptions]::Multiline)
+
+
+
+ if ($matchedLine.Success) {
+ $currentValue = $matchedLine.Groups[1].Value
+
+
+
+ if ($currentValue -eq $old -or $old -eq '') {
+ Write-Host "Updating $key (\"$currentValue\" -> \"$new\")"
+ $content = $content -replace $matchPattern, "$key=$new"
+ $modified = $true
+ }
+ else {
+ Write-Host "Skipping $key (custom value: $currentValue)"
+ }
+ }
+ else {
+ Write-Host "Adding $key=$new"
+ $content += "`n$key=$new"
+ $modified = $true
+ }
 }
 
+
+
 if ($modified) {
-    $content | Set-Content $envPath -Encoding UTF8
-    Write-Host "✅ .env patched for Sail." -ForegroundColor Green
-} else {
-    Write-Host "✅ No changes needed. .env already Sail-compatible." -ForegroundColor Green
+ $content | Set-Content $envPath -Encoding UTF8
+ Write-Host ".env patched for Sail." -ForegroundColor Green
+}
+else {
+ Write-Host "No changes needed. .env already Sail-compatible." -ForegroundColor Green
 }
