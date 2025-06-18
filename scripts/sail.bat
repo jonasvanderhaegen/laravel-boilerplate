@@ -24,7 +24,7 @@ IF NOT EXIST vendor\bin\sail (
         -v %cd%:/var/www/html ^
         -w /var/www/html ^
         laravelsail/php84-composer:latest ^
-        composer install
+        composer install -vvvv
 ) ELSE (
     echo vendor\ already present.
 )
