@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #!/usr/bin/env bash
 set -e
 
@@ -33,12 +34,43 @@ for entry in "${PATCHES[@]}"; do
     echo "⚠️  Skipping empty patch entry"
     continue
   fi
+=======
+#!/bin/sh
+set -e
+
+echo "⚙️  Non-destructive patching of .env for Laravel Sail..."
+touch .env
+
+# Each line: KEY|OLD|NEW
+PATCH_DATA='
+APP_URL||http://localhost
+DB_CONNECTION|sqlite|pgsql
+DB_HOST|127.0.0.1|pgsql
+DB_PORT|3306|5432
+DB_DATABASE||laravel
+DB_USERNAME|root|sail
+DB_PASSWORD||password
+SESSION_DRIVER|database|redis
+QUEUE_CONNECTION|database|redis
+CACHE_STORE|database|redis
+REDIS_HOST|127.0.0.1|valkey
+MAIL_MAILER|log|smtp
+MAIL_HOST|127.0.0.1|mailpit
+MAIL_PORT|2525|1025
+'
+>>>>>>> a5cabbdb1a2f403ea0113a64a5e335e003cdbbae
 
   if grep -qE "^\s*${KEY}=" .env; then
     CURRENT=$(grep -E "^\s*${KEY}=" .env | cut -d '=' -f2-)
 
+<<<<<<< HEAD
     # only replace if it matches the OLD value (or if OLD is empty)
     if [[ -z "$OLD" || "$CURRENT" == "$OLD" ]]; then
+=======
+  if grep -q "^[[:space:]]*${KEY}=" .env; then
+    CURRENT=$(grep "^[[:space:]]*${KEY}=" .env | head -n1 | cut -d '=' -f2-)
+    if [ -z "$OLD" ] || [ "$CURRENT" = "$OLD" ]; then
+>>>>>>> a5cabbdb1a2f403ea0113a64a5e335e003cdbbae
       echo "🔁 Replacing $KEY ($CURRENT → $NEW)"
       sed -i.bak "s|^${KEY}=.*|${KEY}=${NEW}|" .env
     else
