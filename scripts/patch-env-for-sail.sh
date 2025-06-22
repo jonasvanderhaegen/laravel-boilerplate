@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -e
 
 echo "⚙️  Non-destructive patching of .env for Laravel Sail..."
@@ -22,15 +21,24 @@ PATCHES=(
   "MAIL_PORT|2525|1025"
 )
 
-touch .env
+# ensure .env exists
+[ -f .env ] || cp .env.example .env
 
 for entry in "${PATCHES[@]}"; do
-  IFS="|" read -r KEY OLD NEW <<< "$entry"
+  # split into exactly three parts on '|'
+  IFS='|' read -r KEY OLD NEW <<< "$entry"
+
+  # skip any completely empty or malformed entry
+  if [[ -z "$KEY" ]]; then
+    echo "⚠️  Skipping empty patch entry"
+    continue
+  fi
 
   if grep -qE "^\s*${KEY}=" .env; then
     CURRENT=$(grep -E "^\s*${KEY}=" .env | cut -d '=' -f2-)
 
-    if [[ "$CURRENT" == "$OLD" || -z "$OLD" ]]; then
+    # only replace if it matches the OLD value (or if OLD is empty)
+    if [[ -z "$OLD" || "$CURRENT" == "$OLD" ]]; then
       echo "🔁 Replacing $KEY ($CURRENT → $NEW)"
       sed -i.bak "s|^${KEY}=.*|${KEY}=${NEW}|" .env
     else
