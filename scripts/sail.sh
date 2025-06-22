@@ -43,6 +43,9 @@ if [[ "$add_alias" =~ ^[Yy]?$ ]]; then
     fish)
       TARGET_FILE="$HOME/.config/fish/config.fish"
       ;;
+    sh|ash)
+    TARGET_FILE="$HOME/.profile"
+      ;;
     *)
       echo "❗ Unsupported shell ($SHELL_NAME). Please add manually:"
       echo 'sail() { [ -f ./vendor/bin/sail ] && bash ./vendor/bin/sail "$@" || echo "Sail not available"; }'
