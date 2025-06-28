@@ -1,130 +1,58 @@
-#!/bin/sh
-
+#!/usr/bin/env bash
 set -e
 
-echo "🛠️  Initializing Laravel Sail environment..."
+echo "Non-destructive patching of .env for Laravel Sail..."
 
-# 1. Ensure .env exists and patch for Sail
-if [ ! -f ".env" ]; then
-  if [ -f ".env.example" ]; then
-    echo "📄 Copying .env from .env.example..."
-    cp .env.example .env
-    ./scripts/patch-env-for-sail.sh
-  else
-    echo "❌ .env.example not found. Aborting."
-    exit 1
+# Define patch rules: key | old_value | new_value
+PATCHES=(
+  "APP_PORT||80"
+  "WWWGROUP||1000"
+  "WWWUSER||1000"
+  "APP_URL||http://laravel-boilerplate.test"
+  "DB_CONNECTION|sqlite|pgsql"
+  "DB_HOST|127.0.0.1|pgsql"
+  "DB_PORT|3306|5432"
+  "DB_DATABASE||laravel_boilerplate"
+  "DB_USERNAME|root|sail"
+  "DB_PASSWORD||password"
+  "SESSION_DRIVER|database|redis"
+  "QUEUE_CONNECTION|database|redis"
+  "CACHE_STORE|database|redis"
+  "REDIS_HOST|127.0.0.1|valkey"
+  "MAIL_MAILER|log|smtp"
+  "MAIL_HOST|127.0.0.1|mailpit"
+  "MAIL_PORT|2525|1025"
+
+)
+
+# ensure .env exists
+[ -f .env ] || cp .env.example .env
+
+for entry in "${PATCHES[@]}"; do
+  # split into exactly three parts on '|'
+  IFS='|' read -r KEY OLD NEW <<< "$entry"
+
+  # skip any completely empty or malformed entry
+  if [[ -z "$KEY" ]]; then
+    echo "Skipping empty patch entry"
+    continue
   fi
-fi
 
-# 2. Install composer deps using Docker if Sail doesn't exist yet
-if [ ! -f "vendor/bin/sail" ]; then
-  echo "📦 Installing PHP dependencies via Docker..."
-  docker run --rm -u "$(id -u):$(id -g)" \
-    -v "$(pwd)":/var/www/html \
-    -w /var/www/html \
-    laravelsail/php84-composer:latest \
-    composer install
-else
-  echo "✅ vendor/ already present."
-fi
+  if grep -qE "^\s*${KEY}=" .env; then
+    CURRENT=$(grep -E "^\s*${KEY}=" .env | cut -d '=' -f2-)
 
-echo
-read -r -p "⚙️  Would you like to create a 'sail' alias in your shell config? [Y/n]: " add_alias </dev/tty
-if [[ "$add_alias" =~ ^[Yy]?$ ]]; then
-  SHELL_NAME=$(basename "$SHELL")
-
-  case "$SHELL_NAME" in
-    bash)
-      TARGET_FILE="$HOME/.bashrc"
-      ;;
-    zsh)
-      TARGET_FILE="$HOME/.zshrc"
-      ;;
-    fish)
-      TARGET_FILE="$HOME/.config/fish/config.fish"
-      ;;
-    sh|ash)
-    TARGET_FILE="$HOME/.profile"
-      ;;
-    *)
-      echo "❗ Unsupported shell ($SHELL_NAME). Please add manually:"
-      echo 'sail() { [ -f ./vendor/bin/sail ] && bash ./vendor/bin/sail "$@" || echo "Sail not available"; }'
-      exit 0
-      ;;
-  esac
-
-  if grep -q "sail()" "$TARGET_FILE"; then
-    echo "✅ 'sail' function already exists in $TARGET_FILE"
-  else
-    echo "🔧 Adding 'sail' function and aliases to $TARGET_FILE..."
-    if [[ "$SHELL_NAME" == "fish" ]]; then
-      cat <<'EOF' >> "$TARGET_FILE"
-
-function sail
-  if test -f ./vendor/bin/sail
-    bash ./vendor/bin/sail $argv
-  else
-    echo "❌ vendor/bin/sail not found"
-  end
-end
-
-alias s 'sail '
-alias sa 'sail artisan '
-alias sc 'sail composer '
-alias sm 'sail artisan migrate:fresh --seed'
-EOF
+    # only replace if it matches the OLD value (or if OLD is empty)
+    if [[ -z "$OLD" || "$CURRENT" == "$OLD" ]]; then
+      echo "Replacing $KEY ($CURRENT → $NEW)"
+      sed -i.bak "s|^${KEY}=.*|${KEY}=${NEW}|" .env
     else
-      cat <<'EOF' >> "$TARGET_FILE"
-
-# Laravel Sail function and shortcuts
-sail() {
-  if [ -f ./vendor/bin/sail ]; then
-    bash ./vendor/bin/sail "$@"
-  else
-    echo "❌ vendor/bin/sail not found"
-  fi
-}
-
-alias s='sail '
-alias sa='sail artisan '
-alias sc='sail composer '
-alias sm='sa migrate'
-alias smf='sa migrate:fresh'
-alias smfs='sa migrate:fresh --seed'
-alias sus='s up -d'
-alias sus='s stop'
-
-EOF
+      echo "⏭  Skipping $KEY (custom value: $CURRENT)"
     fi
-    echo "✅ Aliases added. Run 'source $TARGET_FILE' or restart your terminal to activate them."
+  else
+    echo "➕ Adding $KEY=${NEW}"
+    echo "${KEY}=${NEW}" >> .env
   fi
-else
-  echo "ℹ️  Skipped alias setup. You can still use './vendor/bin/sail'"
-fi
+done
 
-# 3. Start containers
-echo "🐳 Starting Sail containers..."
-./vendor/bin/sail up -d
-
-# 4. Laravel application setup
-echo "🔑 Generating app key..."
-./vendor/bin/sail artisan key:generate
-
-echo "🧪 Running migrations..."
-./vendor/bin/sail artisan migrate
-
-# Optional seeding
-read -p "🌱 Run database seeders? [y/N]: " seed_confirm
-if [[ "$seed_confirm" =~ ^[Yy]$ ]]; then
-  ./vendor/bin/sail artisan db:seed
-fi
-
-# 5. Frontend setup
-if [ -f "package.json" ]; then
-  echo "📦 Installing frontend dependencies..."
-  ./vendor/bin/sail npm install
-else
-  echo "📦 No package.json found. Skipping frontend setup."
-fi
-
-echo "✅ Laravel Sail is ready"
+rm -f .env.bak
+echo ".env patched non-destructively."
