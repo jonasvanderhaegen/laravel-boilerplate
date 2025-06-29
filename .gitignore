@@ -24,3 +24,4 @@ Homestead.yaml
 Thumbs.db
 /storage/rector
 /tests/Coverage
+nohup.out
