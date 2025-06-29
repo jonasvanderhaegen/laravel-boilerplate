@@ -5,11 +5,11 @@ echo "Non-destructive patching of .env for Laravel Sail..."
 
 # Define patch rules: key | old_value | new_value
 PATCHES=(
-  "APP_URL||http://localhost"
+  "APP_URL||http://laravel-boilerplate.test"
   "DB_CONNECTION|sqlite|pgsql"
   "DB_HOST|127.0.0.1|pgsql"
   "DB_PORT|3306|5432"
-  "DB_DATABASE||laravel"
+  "DB_DATABASE||laravel_boilerplate"
   "DB_USERNAME|root|sail"
   "DB_PASSWORD||password"
   "SESSION_DRIVER|database|redis"
