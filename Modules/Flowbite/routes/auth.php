@@ -12,3 +12,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('verification.notice')
         ->middleware('throttle:6,1');
 });
+
+Route::middleware(['auth', 'verified'])->group(function () {});
+
+Route::get('dashboard', Modules\Flowbite\Livewire\Pages\Dashboard::class)->name('dashboard');
