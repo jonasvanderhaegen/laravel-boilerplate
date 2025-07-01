@@ -1,7 +1,8 @@
+// @ts-ignore
 const modules = import.meta.glob(
     "../../Modules/**/resources/assets/ts/**/*.ts",
     {
-        eager: true, // automatically run side-effects
+        eager: true, // automatically run side effects
     },
 );
 
