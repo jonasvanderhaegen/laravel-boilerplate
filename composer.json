@@ -69,6 +69,15 @@
             "@test:lint",
             "@test:types",
             "@test:unit"
+        ],
+        "herd:test": [
+            "@php artisan config:clear --ansi",
+            "@test:type-coverage",
+            "@test:rector",
+            "@test:lint",
+            "@test:types",
+            "herd coverage ./vendor/bin/pest --colors=always --parallel --coverage --exactly=100",
+            "herd coverage ./vendor/bin/pest --type-coverage --min=100"
         ]
     },
     "extra": {
