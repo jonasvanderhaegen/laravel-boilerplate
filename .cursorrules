@@ -1,0 +1,96 @@
+# Laravel Boilerplate Project Rules
+
+This is a Laravel project with modular architecture. Follow these guidelines when working with this codebase:
+
+## Project Structure
+- Uses Laravel's modular architecture with Modules directory
+- Each module should be self-contained with its own routes, controllers, models, and views
+- Follow PSR-4 autoloading standards
+- Uses TypeScript for frontend code
+
+## Code Style & Architecture
+- Follow PSR-12 coding standards for PHP
+- Use Laravel's conventions for naming (StudlyCase for classes, camelCase for methods, snake_case for database)
+- Run `./vendor/bin/pint` before committing PHP code
+- Use TypeScript for all new JavaScript code
+- Follow the existing code patterns in the project
+
+## Pragmatic Action-Driven Pattern
+- Use Action classes for complex business logic instead of fat controllers or models
+- Actions should be single-purpose classes with an `execute()` or `handle()` method
+- Place actions in `app/Actions` or `Modules/{ModuleName}/Actions`
+- Actions should be easily testable and reusable
+- Keep controllers thin - they should only handle HTTP concerns
+- Models should only contain relationships, scopes, and accessors/mutators
+
+### Action Class Example:
+```php
+namespace App\Actions\User;
+
+class CreateUserAction
+{
+    public function execute(array $data): User
+    {
+        // Validation logic
+        // Business rules
+        // Create user
+        // Trigger events
+        // Return result
+    }
+}
+```
+
+## Database
+- All migrations should be reversible
+- Use descriptive names for database tables and columns
+- Always use foreign key constraints where applicable
+- Prefer using Laravel's schema builder over raw SQL
+
+## Testing
+- Write tests for all new features
+- Place feature tests in `tests/Feature` and unit tests in `tests/Unit`
+- Aim for at least 80% code coverage
+- Run `php artisan test` before committing
+
+## Security
+- Never commit sensitive data (.env files, API keys, passwords)
+- Always validate and sanitize user input
+- Use Laravel's built-in authentication and authorization features
+- Follow OWASP security guidelines
+
+## Git Workflow
+- Create feature branches from `develop`
+- Use meaningful commit messages
+- Keep commits atomic and focused
+- Submit pull requests for code review
+
+## Dependencies
+- Document any new package additions in README
+- Prefer well-maintained packages with good documentation
+- Keep dependencies up to date
+- Run `composer update` and `npm update` regularly in development
+
+## Performance
+- Use eager loading to prevent N+1 queries
+- Cache expensive operations
+- Optimize database queries
+- Use queues for time-consuming tasks
+
+## Frontend
+- Use Tailwind CSS for styling
+- Follow component-based architecture
+- Keep JavaScript modular and reusable
+- Use Vite for asset compilation
+
+## API Development
+- Follow RESTful conventions
+- Use API resources for response formatting
+- Version your APIs
+- Document all endpoints
+- Use Action classes for API business logic
+- Keep API controllers focused on request/response handling
+
+## Environment-Specific Rules
+- Never use `env()` outside of config files
+- All environment variables should have corresponding config entries
+- Use proper environment detection (`app()->environment()`)

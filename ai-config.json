@@ -1,0 +1,51 @@
+{
+  "laravel": {
+    "version": "latest",
+    "modules": true,
+    "testing": true,
+    "typescript": true
+  },
+  "code_style": {
+    "php": "PSR-12",
+    "use_types": true,
+    "strict_types": false
+  },
+  "database": {
+    "prefer": "eloquent",
+    "migrations": "always",
+    "foreign_keys": true
+  },
+  "frontend": {
+    "framework": "none",
+    "css": "tailwind",
+    "typescript": true,
+    "bundler": "vite"
+  },
+  "testing": {
+    "framework": "phpunit",
+    "coverage_threshold": 80,
+    "use_factories": true
+  },
+  "git": {
+    "branch_prefix": {
+      "feature": "feature/",
+      "bugfix": "fix/",
+      "hotfix": "hotfix/"
+    }
+  },
+  "ai_behavior": {
+    "check_existing_patterns": true,
+    "prefer_simple_solutions": true,
+    "always_add_tests": true,
+    "follow_laravel_conventions": true,
+    "use_action_driven_pattern": true,
+    "keep_controllers_thin": true,
+    "business_logic_in_actions": true
+  },
+  "architecture": {
+    "pattern": "action-driven",
+    "controller_responsibility": "http-only",
+    "business_logic_location": "action-classes",
+    "model_responsibility": "data-relationships-only"
+  }
+}

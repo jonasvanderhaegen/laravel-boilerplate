@@ -4,6 +4,44 @@
 
 An opinionated Laravel starter kit tailored for rapid development, built by Jonas Vanderhaegen. Includes Docker-based setup, Livewire SPA scaffolding, modular architecture, and more.
 
+## Project-Specific Instructions for AI Assistants
+
+When working with this codebase, AI assistants should:
+
+1. **Check these files first**:
+    - `.cursorrules` - IDE-specific rules and project conventions
+    - `.ai-instructions.md` - Detailed AI assistant guidelines
+    - `README.md` - This file, for project overview
+    - Module-specific README files in `Modules/*/README.md`
+
+2. **Follow the modular architecture**:
+    - Each feature should be contained within a module
+    - Modules are located in the `Modules/` directory
+    - Use `php artisan module:*` commands for module operations
+
+3. **Maintain consistency**:
+    - Follow existing code patterns and conventions
+    - Use the same libraries and tools already in the project
+    - Check similar implementations before creating new code
+
+## Important Directories
+- `/Modules` - Application modules
+- `/app` - Core application code
+- `/config` - Configuration files
+- `/database` - Migrations and seeders
+- `/tests` - Test files
+- `/resources` - Views and frontend assets
+
+## Coding Standards
+This project follows:
+- PSR-12 for PHP code style
+- Laravel naming conventions
+- TypeScript for type safety
+- Tailwind CSS for styling
+
+For detailed guidelines, see `.cursorrules` and `.ai-instructions.md`.
+
+
 > [!IMPORTANT]
 > **Note:** This boilerplate reflects my personal preferences and workflow. Pull requests are welcome, though changes may be opinionated.<br>
 > For mid to large size projects I just tend to work more modular than all together.
