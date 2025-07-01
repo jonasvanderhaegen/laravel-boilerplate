@@ -2,6 +2,27 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
     <head>
+        <script>
+            (() => {
+
+                let dark = localStorage.getItem('darkMode');
+                if (dark === null) {
+                    // first-time visitor: use OS preference
+                    dark = window.matchMedia(
+                        '(prefers-color-scheme: dark)',
+                    ).matches;
+                } else {
+                    dark = JSON.parse(dark);
+                }
+
+                console.log(dark);
+
+                if (dark) {
+                    document.documentElement.classList.add('dark');
+                }
+            })();
+        </script>
+
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">

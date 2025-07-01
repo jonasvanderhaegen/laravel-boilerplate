@@ -1,0 +1,38 @@
+import {
+    animate,
+    anticipate,
+    backIn,
+    backInOut,
+    backOut,
+    circIn,
+    circInOut,
+    circOut,
+    cubicBezier,
+    easeIn,
+    easeInOut,
+    easeOut,
+    hover,
+    inView,
+    spring,
+    stagger,
+} from "motion";
+
+// Motion
+window.motion = {
+    animate: animate,
+    hover: hover,
+    inView: inView,
+    easeIn: easeIn,
+    easeOut: easeOut,
+    easeInOut: easeInOut,
+    backOut: backOut,
+    backIn: backIn,
+    backInOut: backInOut,
+    circIn: circIn,
+    circOut: circOut,
+    circInOut: circInOut,
+    anticipate: anticipate,
+    spring: spring,
+    stagger: stagger,
+    cubicBezier: cubicBezier,
+};
