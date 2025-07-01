@@ -60,7 +60,7 @@
 
         <button
             type="submit"
-            {{ ! $this->isFormValid() ? 'disabled' : '' }}
+            {{ ! $this->canSubmit() ? 'disabled' : '' }}
             class=" cursor-pointer inline-flex items-center justify-center disabled:cursor-not-allowed w-full rounded-full bg-blue-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-500 focus:ring-4 focus:ring-blue-300 focus:outline-none disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-500 dark:focus:ring-blue-700 transition-opacity ease-in-out duration-200"
         >
             <svg wire:loading.delay.long.class="!opacity-100" aria-hidden="true" role="status" class="transition-opacity ease-in-out duration-200 -ms-6 opacity-0 inline w-4 h-4 me-2 text-gray-200 animate-spin " viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">

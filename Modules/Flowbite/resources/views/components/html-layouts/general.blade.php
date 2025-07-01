@@ -16,7 +16,7 @@
         @livewireStyles
 
         {{-- Vite CSS --}}
-        @vite(['resources/css/app.css'])
+        @vite(['resources/css/app.css', 'resources/ts/app.ts'])
     </head>
 
     <body>
@@ -29,5 +29,4 @@
 
         @livewireScripts
         {{-- Vite JS --}}
-        @vite(['resources/ts/app.ts'])
     </body>

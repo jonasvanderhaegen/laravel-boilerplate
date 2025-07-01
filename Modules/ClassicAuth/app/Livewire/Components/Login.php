@@ -4,40 +4,204 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Livewire\Components;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Modules\ClassicAuth\Livewire\Forms\LoginForm;
+use Modules\Core\Concerns\DispatchesAlerts;
 use Modules\Core\Concerns\HasMobileDesktopViews;
+use Modules\Core\Exceptions\TooManyRequestsException;
 
+#[Layout('layouts.guest')]
 final class Login extends Component
 {
-    use HasMobileDesktopViews;
+    use DispatchesAlerts, HasMobileDesktopViews;
 
     public LoginForm $form;
 
     public bool $showPassword = false;
 
-    #[Computed]
-    public function isFormValid(): bool
+    /**
+     * Initialize component state.
+     */
+    public function mount(): void
     {
-        return $this->isMobile() || ! $this->getErrorBag()->any()
-            && $this->form->email !== ''
-            && $this->form->password !== '';
+        // Initialize rate limit countdown
+        $this->form->initRateLimitCountdown('attemptLogin', null, 'login');
+
+        // Pre-fill email if coming from registration or remembered
+        if (session()->has('login.email')) {
+            $this->form->email = session()->get('login.email');
+            session()->forget('login.email');
+        }
+
+        // Redirect if already authenticated
+        if (Auth::check()) {
+            $this->redirect($this->getIntendedRoute(), navigate: true);
+        }
     }
 
-    public function updated(string $field): void
-    {
-        $this->form->validateOnly($field);
-    }
-
+    /**
+     * Handle the login form submission.
+     */
     public function submit(): void
     {
-        ray($this->form->email, $this->form->getErrorBag()->all());
+        try {
+            // Refresh rate limit countdown
+            $this->form->initRateLimitCountdown('attemptLogin', null, 'login');
+
+            // Attempt login
+
+            $this->form->attemptLogin();
+
+            // Handle successful authentication
+            $this->handleSuccessfulAuthentication();
+
+        } catch (TooManyRequestsException $e) {
+            // Handle rate limiting
+            $this->form->secondsUntilReset = $e->secondsUntilAvailable;
+
+            $this->addError('form.email', __('auth.throttle', [
+                'seconds' => $e->secondsUntilAvailable,
+                'minutes' => ceil($e->minutesUntilAvailable),
+            ]));
+
+            // Dispatch error event for rate limiting
+            $this->alertError(__('Too many login attempts. Please try again later.'));
+
+        } catch (ValidationException $e) {
+            // Reset password field on validation failure
+            $this->form->resetForm();
+
+            // Dispatch error event for invalid credentials
+            $this->alertError($e->getMessage());
+
+            // Re-throw to let Livewire handle the validation errors
+            throw $e;
+        }
     }
 
+    /**
+     * Toggle password visibility.
+     */
+    public function togglePasswordVisibility(): void
+    {
+        $this->showPassword = ! $this->showPassword;
+    }
+
+    /**
+     * Determine if the form is ready for submission.
+     */
+    #[Computed]
+    public function canSubmit(): bool
+    {
+        return filled($this->form->email)
+            && filled($this->form->password)
+            && ! $this->getErrorBag()->any();
+    }
+
+    /**
+     * Get the appropriate view path based on device type.
+     */
+    #[Computed]
+    public function viewPath(): string
+    {
+        $base = 'classicauth::livewire.components.login';
+
+        if ($this->isMobile()) {
+            return "{$base}.mobile";
+        }
+
+        return $base;
+    }
+
+    /**
+     * Handle real-time validation.
+     */
+    public function updated(string $propertyName): void
+    {
+        // Only validate specific fields on blur/change
+        if (in_array($propertyName, ['form.email', 'form.password'], true)) {
+            $this->validateOnly($propertyName);
+        }
+    }
+
+    /**
+     * Navigate to registration page.
+     */
+    public function redirectToRegister(): void
+    {
+        // Preserve email if entered
+        if (filled($this->form->email)) {
+            session()->flash('registration.email', $this->form->email);
+            $this->alertInfo(__('Please complete your registration.'));
+        }
+
+        $this->redirect(route('register'), navigate: true);
+    }
+
+    /**
+     * Navigate to password reset page.
+     */
+    public function redirectToPasswordReset(): void
+    {
+        // Preserve email if entered
+        if (filled($this->form->email)) {
+            session()->flash('password.email', $this->form->email);
+            $this->alertInfo(__('Enter your email to reset your password.'));
+        }
+
+        $this->redirect(route('password.request'), navigate: true);
+    }
+
+    /**
+     * Render the component.
+     */
     public function render(): View
     {
-        return view('classicauth::livewire.components.login');
+        return view($this->viewPath)
+            ->title(__('Sign in to your account'));
+    }
+
+    /**
+     * Handle successful authentication redirect.
+     */
+    protected function handleSuccessfulAuthentication(): void
+    {
+        $intended = $this->getIntendedRoute();
+
+        // Dispatch success event
+        $this->alertSuccess(__('Welcome back! You have successfully logged in.'));
+
+        // Redirect with navigation
+        $this->redirect($intended, navigate: true);
+    }
+
+    /**
+     * Get the intended redirect route.
+     */
+    protected function getIntendedRoute(): string
+    {
+        $intended = session()->pull('url.intended', route('dashboard'));
+
+        // Validate the intended URL is internal
+        if (! $this->isInternalUrl($intended)) {
+            return route('dashboard');
+        }
+
+        return $intended;
+    }
+
+    /**
+     * Check if a URL is internal to the application.
+     */
+    protected function isInternalUrl(string $url): bool
+    {
+        $appUrl = config('app.url');
+
+        return str_starts_with($url, $appUrl) || str_starts_with($url, '/');
     }
 }
