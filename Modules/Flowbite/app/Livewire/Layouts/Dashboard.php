@@ -8,4 +8,4 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('flowbite::components.html-layouts.dashboard')]
-final class Dashboard extends Component {}
+abstract class Dashboard extends Component {}
