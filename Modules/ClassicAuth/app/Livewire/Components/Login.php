@@ -8,15 +8,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Layout;
-use Livewire\Component;
+use Modules\ClassicAuth\Actions\LoginUserAction;
 use Modules\ClassicAuth\Livewire\Forms\LoginForm;
 use Modules\Core\Concerns\DispatchesAlerts;
 use Modules\Core\Concerns\HasMobileDesktopViews;
 use Modules\Core\Exceptions\TooManyRequestsException;
+use Modules\Flowbite\Livewire\Layouts\General;
 
-#[Layout('layouts.guest')]
-final class Login extends Component
+final class Login extends General
 {
     use DispatchesAlerts, HasMobileDesktopViews;
 
@@ -29,7 +28,7 @@ final class Login extends Component
      */
     public function mount(): void
     {
-        // Initialize rate limit countdown
+        // Initialize rate limit countdown using the form's method
         $this->form->initRateLimitCountdown('attemptLogin', null, 'login');
 
         // Pre-fill email if coming from registration or remembered
@@ -47,15 +46,14 @@ final class Login extends Component
     /**
      * Handle the login form submission.
      */
-    public function submit(): void
+    public function submit(LoginUserAction $action): void
     {
         try {
-            // Refresh rate limit countdown
-            $this->form->initRateLimitCountdown('attemptLogin', null, 'login');
+            // Validate form inputs
+            $this->form->validate();
 
-            // Attempt login
-
-            $this->form->attemptLogin();
+            // Execute login action
+            $action->execute($this->form->getCredentials());
 
             // Handle successful authentication
             $this->handleSuccessfulAuthentication();
@@ -76,11 +74,14 @@ final class Login extends Component
             // Reset password field on validation failure
             $this->form->resetForm();
 
-            // Dispatch error event for invalid credentials
-            $this->alertError($e->getMessage());
-
-            // Re-throw to let Livewire handle the validation errors
-            throw $e;
+            // Handle the validation error
+            if ($e->validator->errors()->has('email')) {
+                $this->addError('form.email', $e->validator->errors()->first('email'));
+                $this->alertError(__('Invalid credentials. Please try again.'));
+            } else {
+                // Re-throw for other validation errors
+                throw $e;
+            }
         }
     }
 
@@ -166,6 +167,19 @@ final class Login extends Component
             ->title(__('Sign in to your account'));
     }
 
+    public function fillCorrectUser(bool $remember = false): void
+    {
+        $this->form->remember = $remember;
+        $this->form->email = 'test@example.com';
+        $this->form->password = 'password';
+    }
+
+    public function fillIncorrectUser(): void
+    {
+        $this->form->email = 'test@example.com';
+        $this->form->password = 'wrong&password';
+    }
+
     /**
      * Handle successful authentication redirect.
      */
@@ -185,11 +199,11 @@ final class Login extends Component
      */
     protected function getIntendedRoute(): string
     {
-        $intended = session()->pull('url.intended', route('dashboard'));
+        $intended = session()->pull('url.intended', route('flowbite.dashboard'));
 
         // Validate the intended URL is internal
         if (! $this->isInternalUrl($intended)) {
-            return route('dashboard');
+            return route('flowbite.dashboard');
         }
 
         return $intended;
@@ -202,6 +216,6 @@ final class Login extends Component
     {
         $appUrl = config('app.url');
 
-        return str_starts_with($url, $appUrl) || str_starts_with($url, '/');
+        return str_starts_with($url, (string) $appUrl) || str_starts_with($url, '/');
     }
 }

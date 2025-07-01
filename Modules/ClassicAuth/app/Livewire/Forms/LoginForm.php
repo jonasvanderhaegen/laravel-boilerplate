@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Livewire\Forms;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
+use Modules\ClassicAuth\DataTransferObjects\LoginCredentials;
 use Modules\Core\Concerns\RateLimitDurations;
 use Modules\Core\Concerns\WithRateLimiting;
-use Modules\Core\Exceptions\TooManyRequestsException;
 use Modules\Core\Rules\StrictEmailDomain;
 
+/**
+ * Livewire form for login validation.
+ *
+ * This form handles only validation and data collection.
+ * Business logic is delegated to the LoginUserAction.
+ */
 final class LoginForm extends Form
 {
     use RateLimitDurations, WithRateLimiting;
@@ -28,16 +32,7 @@ final class LoginForm extends Form
     public bool $remember = false;
 
     #[Locked]
-    public int $maxAttempts = 5;
-
-    #[Locked]
-    public int $decaySeconds = 60;
-
-    #[Locked]
-    public int $maxEmailAttempts = 15;
-
-    #[Locked]
-    public int $emailDecaySeconds = 3600;
+    public int $secondsUntilReset = 0;
 
     /**
      * Define validation rules for the form.
@@ -82,66 +77,15 @@ final class LoginForm extends Form
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
-     *
-     * @throws ValidationException
-     * @throws TooManyRequestsException
+     * Get credentials as a DTO.
      */
-    public function attemptLogin(): void
+    public function getCredentials(): LoginCredentials
     {
-        // Validate inputs
-        $this->validate();
-
-        // IP-based rate limiting: max attempts per decay period
-        try {
-            $this->rateLimit($this->maxAttempts, $this->decaySeconds);
-        } catch (TooManyRequestsException $e) {
-            $this->reset('password');
-            throw $e;
-        }
-
-        // Try authentication
-        if (! Auth::attempt([
-            'email' => $this->email,
-            'password' => $this->password,
-        ], $this->remember)) {
-            // On failure, apply email-based rate limiting
-            try {
-                $this->rateLimitByEmail(
-                    $this->maxEmailAttempts,
-                    $this->longDuration(90, $this->emailDecaySeconds),
-                    $this->email,
-                    'login'
-                );
-            } catch (TooManyRequestsException $e) {
-                $this->reset('password');
-                throw $e;
-            }
-
-            // Throw validation exception for invalid credentials
-            throw ValidationException::withMessages([
-                'form.email' => __('auth.failed'),
-            ]);
-        }
-
-        // On success, clear rate limiters
-        $this->handleSuccessfulLogin();
-    }
-
-    /**
-     * Handle a successful authentication attempt.
-     */
-    public function handleSuccessfulLogin(): void
-    {
-        // Clear rate limiters
-        $this->clearRateLimiter();
-        $this->clearRateLimiter('attemptLogin');
-
-        // Regenerate session for security
-        request()->session()->regenerate();
-
-        // Clear any lingering authentication data
-        session()->forget(['login.email', 'login.attempts']);
+        return new LoginCredentials(
+            email: $this->email,
+            password: $this->password,
+            remember: $this->remember
+        );
     }
 
     /**

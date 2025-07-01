@@ -28,7 +28,7 @@ final class AlertManager extends Component
     #[On('alert-added')]
     public function addAlert(string $type, string $message, ?string $id = null): void
     {
-        $id = $id ?? uniqid('alert-');
+        $id ??= uniqid('alert-');
 
         $this->alerts[$id] = [
             'id' => $id,
