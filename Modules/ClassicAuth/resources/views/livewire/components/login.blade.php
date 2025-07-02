@@ -13,6 +13,8 @@
 
             <x-slot name="fields">
 
+                <input id="title" wire:model.live.debounce="form.email" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" type="text" />
+
                 <x-flowbite::input.text-field
                     field="form.email"
                     type="email"
