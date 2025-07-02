@@ -69,7 +69,8 @@
                     </div>
                 @endenv
 
-                <x-flowbite::form-link route="flowbite.register" :grayText="__('Don\'t have an account yet?')" :blueText="__('Create an account')" />
+                    <x-flowbite::form-link route="flowbite.register" :grayText="__('Don\'t have an account yet?')" :blueText="__('Create an account')" />
+                    <x-flowbite::form-link route="flowbite.password.request" :grayText="__('Oops, forgot password?')" :blueText="__('Request to reset password')" />
             </x-slot>
         </x-flowbite::form>
         </div>
