@@ -33,8 +33,7 @@ final class PasswordRequest extends General
 
         // Pre-fill email if coming from login page
         if (session()->has('password.email')) {
-            $this->form->email = session()->get('password.email');
-            session()->forget('password.email');
+            $this->form->email = session()->pull('password.email');
         }
     }
 

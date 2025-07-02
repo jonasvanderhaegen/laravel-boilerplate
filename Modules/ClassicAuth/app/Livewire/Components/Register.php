@@ -36,8 +36,7 @@ final class Register extends General
 
         // Pre-fill email if coming from login or other page
         if (session()->has('registration.email')) {
-            $this->form->email = session()->get('registration.email');
-            session()->forget('registration.email');
+            $this->form->email = session()->pull('registration.email');
         }
     }
 

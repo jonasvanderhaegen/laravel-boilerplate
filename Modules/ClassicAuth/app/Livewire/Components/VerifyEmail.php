@@ -27,13 +27,6 @@ final class VerifyEmail extends General
      */
     public function mount(): void
     {
-        // Redirect if not authenticated
-        if (! Auth::check()) {
-            $this->redirect(route('login'), navigate: true);
-
-            return;
-        }
-
         // Redirect if already verified
         if (Auth::user()->hasVerifiedEmail()) {
             $this->redirect($this->getDefaultRedirect(), navigate: true);
@@ -131,7 +124,7 @@ final class VerifyEmail extends General
      */
     protected function getDefaultRedirect(): string
     {
-        $redirect = config('classicauth.defaults.verified_redirect', 'dashboard');
+        $redirect = config('classicauth.defaults.verified_redirect');
 
         // If it's a route name, convert to URL
         if (\Illuminate\Support\Facades\Route::has($redirect)) {

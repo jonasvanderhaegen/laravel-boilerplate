@@ -35,8 +35,7 @@ final class Login extends General
 
         // Pre-fill email if coming from registration or remembered
         if (session()->has('login.email')) {
-            $this->form->email = session()->get('login.email');
-            session()->forget('login.email');
+            $this->form->email = session()->pull('login.email');
         }
     }
 

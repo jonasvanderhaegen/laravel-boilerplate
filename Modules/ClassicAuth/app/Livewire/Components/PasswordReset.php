@@ -41,11 +41,6 @@ final class PasswordReset extends General
         if ($email) {
             $this->form->email = $email;
         }
-
-        // Redirect if already authenticated
-        if (Auth::check()) {
-            $this->redirect(route('dashboard'), navigate: true);
-        }
     }
 
     /**

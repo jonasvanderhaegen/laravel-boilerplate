@@ -24,7 +24,7 @@ return [
         | route name or path within your application.
         |
         */
-        'login_redirect' => env('AUTH_LOGIN_REDIRECT', 'dashboard'),
+        'login_redirect' => env('AUTH_LOGIN_REDIRECT', 'flowbite.dashboard'),
 
         /*
         |--------------------------------------------------------------------------
@@ -42,7 +42,7 @@ return [
         | Registration Settings
         |--------------------------------------------------------------------------
         */
-        'register_redirect' => env('AUTH_REGISTER_REDIRECT', 'dashboard'),
+        'register_redirect' => env('AUTH_REGISTER_REDIRECT', 'flowbite.dashboard'),
         'auto_login_after_register' => env('AUTH_AUTO_LOGIN_AFTER_REGISTER', true),
 
         /*
@@ -50,7 +50,7 @@ return [
         | Password Reset Settings
         |--------------------------------------------------------------------------
         */
-        'password_reset_redirect' => env('AUTH_PASSWORD_RESET_REDIRECT', 'login'),
+        'password_reset_redirect' => env('AUTH_PASSWORD_RESET_REDIRECT', 'flowbite.login'),
         'auto_login_after_reset' => env('AUTH_AUTO_LOGIN_AFTER_RESET', true),
 
         /*
@@ -58,7 +58,7 @@ return [
         | Email Verification Settings
         |--------------------------------------------------------------------------
         */
-        'verified_redirect' => env('AUTH_VERIFIED_REDIRECT', 'dashboard'),
+        'verified_redirect' => env('AUTH_VERIFIED_REDIRECT', 'flowbite.dashboard'),
     ],
 
     /*
