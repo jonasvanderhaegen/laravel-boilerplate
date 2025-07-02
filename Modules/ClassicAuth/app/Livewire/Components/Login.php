@@ -130,17 +130,6 @@ final class Login extends General
     }
 
     /**
-     * Handle real-time validation.
-     */
-    public function updated(string $propertyName): void
-    {
-        // Only validate specific fields on blur/change
-        if (in_array($propertyName, ['form.email', 'form.password'], true)) {
-            $this->validateOnly($propertyName);
-        }
-    }
-
-    /**
      * Navigate to registration page.
      */
     public function redirectToRegister(): void

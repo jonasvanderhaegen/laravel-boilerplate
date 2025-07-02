@@ -22,13 +22,13 @@ final class LoginForm extends Form
 {
     use RateLimitDurations, WithRateLimiting;
 
-    #[Validate]
+    #[Validate(['required', 'email:rfc,dns', 'lowercase', 'max:255', new StrictEmailDomain()])]
     public string $email = '';
 
-    #[Validate]
+    #[Validate(['required', 'string', 'min:8', 'confirmed', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/'])]
     public string $password = '';
 
-    #[Validate]
+    #[Validate('boolean')]
     public bool $remember = false;
 
     #[Locked]
@@ -39,6 +39,7 @@ final class LoginForm extends Form
      *
      * @return array<string, mixed>
      */
+    /*
     public function rules(): array
     {
         return [
@@ -60,6 +61,7 @@ final class LoginForm extends Form
             ],
         ];
     }
+    */
 
     /**
      * Custom validation messages.
