@@ -133,12 +133,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Configuration
+    | Security Configuration
     |--------------------------------------------------------------------------
     |
-    | These options configure session behavior after authentication.
+    | Security-related settings for authentication.
     |
     */
+
+    'security' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Authentication Minimum Time
+        |--------------------------------------------------------------------------
+        |
+        | Minimum time in milliseconds that authentication should take.
+        | This prevents timing attacks by ensuring consistent response times
+        | regardless of whether the user exists or the password is correct.
+        |
+        */
+        'auth_min_time_ms' => env('AUTH_MIN_TIME_MS', 300),
+    ],
 
     'session' => [
         /*

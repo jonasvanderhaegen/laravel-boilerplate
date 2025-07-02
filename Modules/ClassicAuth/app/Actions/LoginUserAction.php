@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Timebox;
 use Illuminate\Validation\ValidationException;
 use Modules\ClassicAuth\DataTransferObjects\LoginCredentials;
 use Modules\ClassicAuth\DataTransferObjects\LoginResult;
@@ -28,6 +29,7 @@ use Modules\Core\Exceptions\TooManyRequestsException;
  * - Session management
  * - Event dispatching
  * - Login attempt logging
+ * - Timing attack prevention using Laravel's Timebox
  */
 final class LoginUserAction
 {
@@ -41,6 +43,10 @@ final class LoginUserAction
 
     private const EMAIL_DECAY_SECONDS = 3600;
 
+    public function __construct(
+        private readonly Timebox $timebox
+    ) {}
+
     /**
      * Execute the login action.
      *
@@ -53,64 +59,43 @@ final class LoginUserAction
         $ipAddress = request()->ip() ?? 'unknown';
         $userAgent = request()->userAgent() ?? 'unknown';
 
-        // Check IP-based rate limiting
-        $ipSettings = $this->getIpRateLimitSettings();
-        try {
-            $this->rateLimit($ipSettings['max_attempts'], $ipSettings['decay_seconds']);
-        } catch (TooManyRequestsException $e) {
-            // Log rate-limited attempt
-            if (config('classicauth.tracking.enabled', true)) {
-                LoginAttempt::logFailure(
-                    $credentials->email,
-                    $ipAddress,
-                    $userAgent,
-                    LoginAttempt::FAILURE_RATE_LIMITED
-                );
-            }
-            throw $e;
-        }
+        // Check IP-based rate limiting first (outside timebox for fast fail)
+        $this->checkIpRateLimit($credentials, $ipAddress, $userAgent);
 
-        // Attempt authentication
-        if (! Auth::attempt($credentials->toAuthArray(), $credentials->remember)) {
-            // On failure, apply email-based rate limiting
-            $emailSettings = $this->getEmailRateLimitSettings();
-            try {
-                $this->rateLimitByEmail(
-                    $emailSettings['max_attempts'],
-                    $this->longDuration(90, $emailSettings['decay_seconds']),
-                    $credentials->email,
-                    'login'
-                );
-            } catch (TooManyRequestsException $e) {
-                // Log rate-limited attempt
+        // Use timebox to prevent timing attacks
+        // Convert milliseconds to microseconds (300ms = 300,000 microseconds)
+        $minimumMicroseconds = config('classicauth.security.auth_min_time_ms', 300) * 1000;
+
+        return $this->timebox->call(function (Timebox $timebox) use ($credentials, $ipAddress, $userAgent) {
+            // Attempt authentication
+            $authenticated = Auth::attempt($credentials->toAuthArray(), $credentials->remember);
+
+            if (! $authenticated) {
+                // Check email-based rate limiting for failed attempts
+                $this->checkEmailRateLimit($credentials, $ipAddress, $userAgent);
+
+                // Log failed attempt
                 if (config('classicauth.tracking.enabled', true)) {
                     LoginAttempt::logFailure(
                         $credentials->email,
                         $ipAddress,
                         $userAgent,
-                        LoginAttempt::FAILURE_RATE_LIMITED
+                        LoginAttempt::FAILURE_INVALID_CREDENTIALS
                     );
                 }
-                throw $e;
+
+                // Don't call returnEarly() for failures - maintain full timing
+                throw ValidationException::withMessages([
+                    'email' => __('auth.failed'),
+                ]);
             }
 
-            // Log failed attempt
-            if (config('classicauth.tracking.enabled', true)) {
-                LoginAttempt::logFailure(
-                    $credentials->email,
-                    $ipAddress,
-                    $userAgent,
-                    LoginAttempt::FAILURE_INVALID_CREDENTIALS
-                );
-            }
+            // Success - allow early return for better UX
+            $timebox->returnEarly();
 
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
-        }
-
-        // Handle successful login
-        return $this->handleSuccessfulLogin($credentials->remember, $ipAddress, $userAgent);
+            // Handle successful login (no session regeneration here)
+            return $this->handleSuccessfulLogin($credentials->remember, $ipAddress, $userAgent);
+        }, $minimumMicroseconds);
     }
 
     /**
@@ -152,6 +137,61 @@ final class LoginUserAction
     }
 
     /**
+     * Check IP-based rate limiting.
+     *
+     * @throws TooManyRequestsException
+     */
+    private function checkIpRateLimit(LoginCredentials $credentials, string $ipAddress, string $userAgent): void
+    {
+        $ipSettings = $this->getIpRateLimitSettings();
+
+        try {
+            $this->rateLimit($ipSettings['max_attempts'], $ipSettings['decay_seconds']);
+        } catch (TooManyRequestsException $e) {
+            // Log rate-limited attempt
+            if (config('classicauth.tracking.enabled', true)) {
+                LoginAttempt::logFailure(
+                    $credentials->email,
+                    $ipAddress,
+                    $userAgent,
+                    LoginAttempt::FAILURE_RATE_LIMITED
+                );
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Check email-based rate limiting for failed attempts.
+     *
+     * @throws TooManyRequestsException
+     */
+    private function checkEmailRateLimit(LoginCredentials $credentials, string $ipAddress, string $userAgent): void
+    {
+        $emailSettings = $this->getEmailRateLimitSettings();
+
+        try {
+            $this->rateLimitByEmail(
+                $emailSettings['max_attempts'],
+                $this->longDuration(90, $emailSettings['decay_seconds']),
+                $credentials->email,
+                'login'
+            );
+        } catch (TooManyRequestsException $e) {
+            // Log rate-limited attempt
+            if (config('classicauth.tracking.enabled', true)) {
+                LoginAttempt::logFailure(
+                    $credentials->email,
+                    $ipAddress,
+                    $userAgent,
+                    LoginAttempt::FAILURE_RATE_LIMITED
+                );
+            }
+            throw $e;
+        }
+    }
+
+    /**
      * Handle successful login.
      */
     private function handleSuccessfulLogin(bool $remember, string $ipAddress, string $userAgent): LoginResult
@@ -190,9 +230,6 @@ final class LoginUserAction
             session()->forget(['login.email', 'login.attempts']);
         });
 
-        // Regenerate session for security (outside transaction)
-        request()->session()->regenerate();
-
         // Create login result
         $loginResult = LoginResult::success($user, $intendedUrl, $remember);
 
@@ -204,6 +241,9 @@ final class LoginUserAction
         // Dispatch login event
         event(new Login(Auth::guard(), $user, $remember));
         event(new Authenticated(Auth::guard(), $user));
+
+        // Note: Session regeneration is handled by the calling component
+        // to avoid Livewire CSRF token issues
 
         return $loginResult;
     }

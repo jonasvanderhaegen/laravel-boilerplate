@@ -56,8 +56,20 @@ final class Login extends General
             // Execute login action
             $loginResult = $action->execute($this->form->getCredentials());
 
-            // Handle successful authentication
-            $this->handleSuccessfulAuthentication($loginResult->intendedUrl);
+            // Validate intended URL for security
+            $intendedUrl = $loginResult->intendedUrl;
+            if (! $this->isInternalUrl($intendedUrl)) {
+                $intendedUrl = $this->getDefaultRedirect();
+            }
+
+            // Regenerate session for security
+            session()->regenerate();
+
+            // Store success message
+            session()->flash('success', __('Welcome back! You have successfully logged in.'));
+
+            // Use JavaScript redirect to avoid Livewire CSRF issues
+            $this->js("window.location.href = '".e($intendedUrl)."'");
 
         } catch (TooManyRequestsException $e) {
             // Handle rate limiting
@@ -179,23 +191,6 @@ final class Login extends General
     {
         $this->form->email = 'jonasvanderh@gmail.com';
         $this->form->password = 'wrong&password';
-    }
-
-    /**
-     * Handle successful authentication redirect.
-     */
-    protected function handleSuccessfulAuthentication(string $intendedUrl): void
-    {
-        // Validate the intended URL is internal
-        if (! $this->isInternalUrl($intendedUrl)) {
-            $intendedUrl = $this->getDefaultRedirect();
-        }
-
-        // Dispatch success event
-        $this->alertSuccess(__('Welcome back! You have successfully logged in.'));
-
-        // Redirect with full page reload after login (avoids CSRF issues with session regeneration)
-        $this->redirect($intendedUrl);
     }
 
     /**
