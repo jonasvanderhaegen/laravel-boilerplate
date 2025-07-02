@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
+use Livewire\Component;
 use Modules\ClassicAuth\Actions\LoginUserAction;
 use Modules\ClassicAuth\Livewire\Forms\LoginForm;
 use Modules\Core\Concerns\DispatchesAlerts;
@@ -53,10 +54,10 @@ final class Login extends General
             $this->form->validate();
 
             // Execute login action
-            $action->execute($this->form->getCredentials());
+            $loginResult = $action->execute($this->form->getCredentials());
 
             // Handle successful authentication
-            $this->handleSuccessfulAuthentication();
+            $this->handleSuccessfulAuthentication($loginResult->intendedUrl);
 
         } catch (TooManyRequestsException $e) {
             // Handle rate limiting
@@ -170,28 +171,31 @@ final class Login extends General
     public function fillCorrectUser(bool $remember = false): void
     {
         $this->form->remember = $remember;
-        $this->form->email = 'test@example.com';
+        $this->form->email = 'jonasvanderh@gmail.com';
         $this->form->password = 'password';
     }
 
     public function fillIncorrectUser(): void
     {
-        $this->form->email = 'test@example.com';
+        $this->form->email = 'jonasvanderh@gmail.com';
         $this->form->password = 'wrong&password';
     }
 
     /**
      * Handle successful authentication redirect.
      */
-    protected function handleSuccessfulAuthentication(): void
+    protected function handleSuccessfulAuthentication(string $intendedUrl): void
     {
-        $intended = $this->getIntendedRoute();
+        // Validate the intended URL is internal
+        if (! $this->isInternalUrl($intendedUrl)) {
+            $intendedUrl = $this->getDefaultRedirect();
+        }
 
         // Dispatch success event
         $this->alertSuccess(__('Welcome back! You have successfully logged in.'));
 
-        // Redirect with navigation
-        $this->redirect($intended, navigate: true);
+        // Redirect with full page reload after login (avoids CSRF issues with session regeneration)
+        $this->redirect($intendedUrl);
     }
 
     /**
@@ -199,14 +203,31 @@ final class Login extends General
      */
     protected function getIntendedRoute(): string
     {
-        $intended = session()->pull('url.intended', route('flowbite.dashboard'));
+        $defaultRedirect = $this->getDefaultRedirect();
+        $intended = session()->pull('url.intended', $defaultRedirect);
 
         // Validate the intended URL is internal
         if (! $this->isInternalUrl($intended)) {
-            return route('flowbite.dashboard');
+            return $defaultRedirect;
         }
 
         return $intended;
+    }
+
+    /**
+     * Get default redirect route from config.
+     */
+    protected function getDefaultRedirect(): string
+    {
+        $redirect = config('classicauth.defaults.login_redirect', 'dashboard');
+
+        // If it's a route name, convert to URL
+        if (\Illuminate\Support\Facades\Route::has($redirect)) {
+            return route($redirect);
+        }
+
+        // Otherwise return as-is (could be a path)
+        return $redirect;
     }
 
     /**

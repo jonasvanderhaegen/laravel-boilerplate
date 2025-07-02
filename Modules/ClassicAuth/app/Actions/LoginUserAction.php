@@ -8,8 +8,13 @@ use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Modules\ClassicAuth\DataTransferObjects\LoginCredentials;
+use Modules\ClassicAuth\DataTransferObjects\LoginResult;
+use Modules\ClassicAuth\Models\LoginAttempt;
 use Modules\Core\Concerns\RateLimitDurations;
 use Modules\Core\Concerns\WithRateLimiting;
 use Modules\Core\Exceptions\TooManyRequestsException;
@@ -22,6 +27,7 @@ use Modules\Core\Exceptions\TooManyRequestsException;
  * - Rate limiting (IP and email-based)
  * - Session management
  * - Event dispatching
+ * - Login attempt logging
  */
 final class LoginUserAction
 {
@@ -42,27 +48,60 @@ final class LoginUserAction
      * @throws ValidationException
      * @throws TooManyRequestsException
      */
-    public function execute(LoginCredentials $credentials): \Illuminate\Contracts\Auth\Authenticatable
+    public function execute(LoginCredentials $credentials): LoginResult
     {
+        $ipAddress = request()->ip() ?? 'unknown';
+        $userAgent = request()->userAgent() ?? 'unknown';
+
         // Check IP-based rate limiting
+        $ipSettings = $this->getIpRateLimitSettings();
         try {
-            $this->rateLimit(self::MAX_ATTEMPTS, self::DECAY_SECONDS);
+            $this->rateLimit($ipSettings['max_attempts'], $ipSettings['decay_seconds']);
         } catch (TooManyRequestsException $e) {
+            // Log rate-limited attempt
+            if (config('classicauth.tracking.enabled', true)) {
+                LoginAttempt::logFailure(
+                    $credentials->email,
+                    $ipAddress,
+                    $userAgent,
+                    LoginAttempt::FAILURE_RATE_LIMITED
+                );
+            }
             throw $e;
         }
 
         // Attempt authentication
         if (! Auth::attempt($credentials->toAuthArray(), $credentials->remember)) {
             // On failure, apply email-based rate limiting
+            $emailSettings = $this->getEmailRateLimitSettings();
             try {
                 $this->rateLimitByEmail(
-                    self::MAX_EMAIL_ATTEMPTS,
-                    $this->longDuration(90, self::EMAIL_DECAY_SECONDS),
+                    $emailSettings['max_attempts'],
+                    $this->longDuration(90, $emailSettings['decay_seconds']),
                     $credentials->email,
                     'login'
                 );
             } catch (TooManyRequestsException $e) {
+                // Log rate-limited attempt
+                if (config('classicauth.tracking.enabled', true)) {
+                    LoginAttempt::logFailure(
+                        $credentials->email,
+                        $ipAddress,
+                        $userAgent,
+                        LoginAttempt::FAILURE_RATE_LIMITED
+                    );
+                }
                 throw $e;
+            }
+
+            // Log failed attempt
+            if (config('classicauth.tracking.enabled', true)) {
+                LoginAttempt::logFailure(
+                    $credentials->email,
+                    $ipAddress,
+                    $userAgent,
+                    LoginAttempt::FAILURE_INVALID_CREDENTIALS
+                );
             }
 
             throw ValidationException::withMessages([
@@ -71,42 +110,101 @@ final class LoginUserAction
         }
 
         // Handle successful login
-        return $this->handleSuccessfulLogin($credentials->remember);
+        return $this->handleSuccessfulLogin($credentials->remember, $ipAddress, $userAgent);
+    }
+
+    /**
+     * Get IP rate limit settings from config.
+     */
+    private function getIpRateLimitSettings(): array
+    {
+        return [
+            'max_attempts' => config('classicauth.rate_limiting.ip.max_attempts', self::MAX_ATTEMPTS),
+            'decay_seconds' => config('classicauth.rate_limiting.ip.decay_seconds', self::DECAY_SECONDS),
+        ];
+    }
+
+    /**
+     * Get email rate limit settings from config.
+     */
+    private function getEmailRateLimitSettings(): array
+    {
+        return [
+            'max_attempts' => config('classicauth.rate_limiting.email.max_attempts', self::MAX_EMAIL_ATTEMPTS),
+            'decay_seconds' => config('classicauth.rate_limiting.email.decay_seconds', self::EMAIL_DECAY_SECONDS),
+        ];
+    }
+
+    /**
+     * Get default redirect route from config.
+     */
+    private function getDefaultRedirect(): string
+    {
+        $redirect = config('classicauth.defaults.login_redirect', 'dashboard');
+
+        // If it's a route name, convert to URL
+        if (Route::has($redirect)) {
+            return route($redirect);
+        }
+
+        // Otherwise return as-is (could be a path)
+        return $redirect;
     }
 
     /**
      * Handle successful login.
      */
-    private function handleSuccessfulLogin(bool $remember): \Illuminate\Contracts\Auth\Authenticatable
+    private function handleSuccessfulLogin(bool $remember, string $ipAddress, string $userAgent): LoginResult
     {
         $user = Auth::user();
+        $intendedUrl = session()->pull('url.intended', $this->getDefaultRedirect());
 
-        DB::transaction(function () use ($user) {
+        DB::transaction(function () use ($user, $ipAddress, $userAgent) {
             // Clear rate limiters
             $this->clearRateLimiter();
             $this->clearRateLimiter('attemptLogin');
 
             // Clear email-based rate limiter
-            $emailKey = 'login:email:'.mb_strtolower($user->email);
-            $this->clearRateLimiterByKey($emailKey);
+            $emailKey = 'login_email:'.mb_strtolower($user->email);
+            RateLimiter::clear($emailKey);
 
-            // Regenerate session for security
-            request()->session()->regenerate();
+            // Update last login timestamp if columns exist
+            $updateData = [];
+            if (Schema::hasColumn('users', 'last_login_at')) {
+                $updateData['last_login_at'] = now();
+            }
+            if (Schema::hasColumn('users', 'last_login_ip')) {
+                $updateData['last_login_ip'] = $ipAddress;
+            }
 
-            // Update last login timestamp
-            $user->update([
-                'last_login_at' => now(),
-                'last_login_ip' => request()->ip(),
-            ]);
+            if (! empty($updateData)) {
+                $user->update($updateData);
+            }
+
+            // Log successful attempt
+            if (config('classicauth.tracking.enabled', true)) {
+                LoginAttempt::logSuccess($user, $ipAddress, $userAgent);
+            }
 
             // Clear any lingering authentication data
             session()->forget(['login.email', 'login.attempts']);
         });
 
+        // Regenerate session for security (outside transaction)
+        request()->session()->regenerate();
+
+        // Create login result
+        $loginResult = LoginResult::success($user, $intendedUrl, $remember);
+
+        // Store session data if enabled
+        if (config('classicauth.session.store_login_data', true)) {
+            session()->put($loginResult->getSessionData());
+        }
+
         // Dispatch login event
         event(new Login(Auth::guard(), $user, $remember));
         event(new Authenticated(Auth::guard(), $user));
 
-        return $user;
+        return $loginResult;
     }
 }

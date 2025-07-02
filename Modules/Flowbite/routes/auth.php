@@ -13,6 +13,6 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('throttle:6,1');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {});
-
-Route::get('dashboard', Modules\Flowbite\Livewire\Pages\Dashboard::class)->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('dashboard', Modules\Flowbite\Livewire\Pages\Dashboard::class)->name('dashboard');
+});

@@ -24,6 +24,13 @@ final class PrimaryServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+
+        // Register console commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\ClassicAuth\Console\Commands\CleanupLoginAttempts::class,
+            ]);
+        }
     }
 
     /**
@@ -32,5 +39,6 @@ final class PrimaryServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->register(EventServiceProvider::class);
+        $this->app->register(RouteServiceProvider::class);
     }
 }
