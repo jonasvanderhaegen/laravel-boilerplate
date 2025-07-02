@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Actions;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Timebox;
-use App\Models\User;
 use Modules\ClassicAuth\Events\EmailVerification\EmailVerificationLinkSent;
 use Modules\ClassicAuth\Events\EmailVerification\EmailVerificationRequested;
 use Modules\ClassicAuth\Events\Security\TooManyFailedAttempts;
@@ -27,6 +27,7 @@ final class ResendVerificationEmailAction
     use RateLimitDurations, WithRateLimiting;
 
     private const MAX_ATTEMPTS = 3;
+
     private const DECAY_SECONDS = 300; // 5 minutes
 
     public function __construct(
@@ -43,8 +44,8 @@ final class ResendVerificationEmailAction
         $user = Auth::user();
         $ipAddress = request()->ip() ?? 'unknown';
         $userAgent = request()->userAgent() ?? 'unknown';
-        
-        if (!$user instanceof User) {
+
+        if (! $user instanceof User) {
             return false;
         }
 
@@ -52,7 +53,7 @@ final class ResendVerificationEmailAction
         if ($user->hasVerifiedEmail()) {
             return false;
         }
-        
+
         // Dispatch request event
         event(new EmailVerificationRequested($user, $ipAddress, $userAgent));
 
@@ -65,7 +66,7 @@ final class ResendVerificationEmailAction
         return $this->timebox->call(function (Timebox $timebox) use ($user, $ipAddress) {
             // Send verification email
             $user->sendEmailVerificationNotification();
-            
+
             // Dispatch link sent event
             event(new EmailVerificationLinkSent($user, $ipAddress));
 
@@ -78,7 +79,7 @@ final class ResendVerificationEmailAction
             // Log the action
             logger()->info('Email verification resent', [
                 'user_id' => $user->id,
-                'email' => $user->email
+                'email' => $user->email,
             ]);
 
             return true;
@@ -101,9 +102,9 @@ final class ResendVerificationEmailAction
             logger()->warning('Email verification resend rate limited', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'ip' => request()->ip()
+                'ip' => request()->ip(),
             ]);
-            
+
             // Dispatch security event
             event(new TooManyFailedAttempts(
                 'email_verification',
@@ -112,7 +113,7 @@ final class ResendVerificationEmailAction
                 $decaySeconds,
                 request()->ip() ?? 'unknown'
             ));
-            
+
             throw $e;
         }
     }

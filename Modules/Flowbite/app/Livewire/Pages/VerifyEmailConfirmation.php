@@ -16,8 +16,11 @@ final class VerifyEmailConfirmation extends General
     use DispatchesAlerts;
 
     public ?int $id = null;
+
     public ?string $hash = null;
+
     public bool $verified = false;
+
     public bool $error = false;
 
     public function mount(int $id, string $hash, VerifyEmailAction $action): void
@@ -26,9 +29,10 @@ final class VerifyEmailConfirmation extends General
         $this->hash = $hash;
 
         // Ensure user is authenticated
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             session()->flash('error', __('Please log in to verify your email address.'));
             $this->redirect(route('login'), navigate: true);
+
             return;
         }
 
@@ -36,6 +40,7 @@ final class VerifyEmailConfirmation extends General
         if (Auth::id() !== $id) {
             session()->flash('error', __('This verification link is not for your account.'));
             $this->redirect(route('verification.notice'), navigate: true);
+
             return;
         }
 
@@ -46,7 +51,7 @@ final class VerifyEmailConfirmation extends General
             if ($result) {
                 $this->verified = true;
                 session()->flash('success', __('Your email has been successfully verified!'));
-                
+
                 // Redirect after a short delay
                 $this->dispatch('redirect-after-verification');
             } else {
@@ -54,7 +59,7 @@ final class VerifyEmailConfirmation extends General
                 $this->alertError(__('The verification link is invalid or has expired.'));
             }
 
-        } catch (TooManyRequestsException $e) {
+        } catch (TooManyRequestsException) {
             $this->error = true;
             $this->alertError(__('Too many verification attempts. Please try again later.'));
         }
@@ -63,7 +68,7 @@ final class VerifyEmailConfirmation extends General
     public function redirectToDashboard(): void
     {
         $redirect = config('classicauth.defaults.verified_redirect', 'dashboard');
-        
+
         if (\Illuminate\Support\Facades\Route::has($redirect)) {
             $this->redirect(route($redirect), navigate: true);
         } else {

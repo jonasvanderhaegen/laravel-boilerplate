@@ -13,7 +13,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('verify-email', Modules\Flowbite\Livewire\Pages\VerifyEmail::class)
         ->name('verification.notice')
         ->middleware('throttle:6,1');
-    
+
     Route::get('verify-email/{id}/{hash}', Modules\Flowbite\Livewire\Pages\VerifyEmailConfirmation::class)
         ->name('verification.verify')
         ->middleware(['signed', 'throttle:6,1']);

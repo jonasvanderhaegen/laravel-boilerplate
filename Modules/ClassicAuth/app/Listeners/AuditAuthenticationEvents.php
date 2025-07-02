@@ -4,35 +4,22 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Listeners;
 
+use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
-use Modules\ClassicAuth\Events\Login\LoginSucceeded;
-use Modules\ClassicAuth\Events\Login\LoginFailed;
-use Modules\ClassicAuth\Events\Login\UserLoggedOut;
-use Modules\ClassicAuth\Events\Registration\UserRegistered;
-use Modules\ClassicAuth\Events\Registration\RegistrationFailed;
-use Modules\ClassicAuth\Events\PasswordReset\PasswordResetRequested;
-use Modules\ClassicAuth\Events\PasswordReset\PasswordResetCompleted;
 use Modules\ClassicAuth\Events\EmailVerification\EmailVerificationCompleted;
+use Modules\ClassicAuth\Events\Login\LoginFailed;
+use Modules\ClassicAuth\Events\Login\LoginSucceeded;
+use Modules\ClassicAuth\Events\Login\UserLoggedOut;
+use Modules\ClassicAuth\Events\PasswordReset\PasswordResetCompleted;
+use Modules\ClassicAuth\Events\PasswordReset\PasswordResetRequested;
+use Modules\ClassicAuth\Events\Registration\RegistrationFailed;
+use Modules\ClassicAuth\Events\Registration\UserRegistered;
 
 /**
  * Log all authentication events for audit purposes.
  */
-class AuditAuthenticationEvents
+final class AuditAuthenticationEvents
 {
-    /**
-     * Get the log channel.
-     */
-    private function getLogChannel()
-    {
-        $channel = config('classicauth.logging.channel', 'daily');
-        
-        // Use default logger if channel is not configured
-        if (!$channel || !config("logging.channels.{$channel}")) {
-            return Log::channel();
-        }
-        
-        return Log::channel($channel);
-    }
     /**
      * Handle login success.
      */
@@ -152,10 +139,9 @@ class AuditAuthenticationEvents
     /**
      * Subscribe to multiple events.
      *
-     * @param  \Illuminate\Events\Dispatcher  $events
      * @return array<string, string>
      */
-    public function subscribe($events): array
+    public function subscribe(Dispatcher $events): array
     {
         return [
             LoginSucceeded::class => 'handleLoginSuccess',
@@ -167,5 +153,13 @@ class AuditAuthenticationEvents
             PasswordResetCompleted::class => 'handlePasswordResetComplete',
             EmailVerificationCompleted::class => 'handleEmailVerification',
         ];
+    }
+
+    /**
+     * Get the log channel.
+     */
+    private function getLogChannel(): \Psr\Log\LoggerInterface
+    {
+        return Log::channel('auth');
     }
 }

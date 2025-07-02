@@ -19,6 +19,7 @@ final class VerifyEmail extends General
     use DispatchesAlerts, HasMobileDesktopViews;
 
     public int $secondsUntilReset = 0;
+
     public bool $emailSent = false;
 
     /**
@@ -29,6 +30,7 @@ final class VerifyEmail extends General
         // Redirect if not authenticated
         if (! Auth::check()) {
             $this->redirect(route('login'), navigate: true);
+
             return;
         }
 
@@ -79,7 +81,7 @@ final class VerifyEmail extends General
         Auth::logout();
         session()->invalidate();
         session()->regenerateToken();
-        
+
         $this->redirect(route('login'), navigate: true);
     }
 

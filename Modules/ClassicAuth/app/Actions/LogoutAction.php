@@ -17,16 +17,16 @@ final class LogoutAction
         $ipAddress = request()->ip() ?? 'unknown';
         $userAgent = request()->userAgent() ?? 'unknown';
         $sessionId = session()->getId();
-        
+
         Auth::guard('web')->logout();
         session()->invalidate();
         session()->regenerateToken();
-        
+
         // Dispatch logout event
         event(new UserLoggedOut($user, $ipAddress, $userAgent, $sessionId));
 
         $redirect = config('classicauth.defaults.logout_redirect', '/');
-        
+
         return redirect($redirect);
     }
 }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Events\PasswordReset;
 
+use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\User;
 
 /**
  * Event fired when a password is successfully reset.

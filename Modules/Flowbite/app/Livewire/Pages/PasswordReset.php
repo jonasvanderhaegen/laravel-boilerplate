@@ -10,6 +10,7 @@ use Modules\Flowbite\Livewire\Layouts\General;
 final class PasswordReset extends General
 {
     public ?string $token = null;
+
     public ?string $email = null;
 
     public function mount(?string $token = null): void

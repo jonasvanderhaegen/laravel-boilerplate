@@ -6,6 +6,7 @@ namespace Modules\ClassicAuth\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Modules\ClassicAuth\Events\LoginAttempted;
 
 /**
@@ -23,7 +24,7 @@ final class LogLoginAttempt implements ShouldQueue
         $attempt = $event->getAttempt();
 
         // Log the attempt
-        Log::channel('auth')->info('Login attempt', [
+        $this->log('info', 'Login attempt', [
             'successful' => $attempt->successful,
             'email' => $attempt->email,
             'ip_address' => $attempt->ip_address,
@@ -40,6 +41,26 @@ final class LogLoginAttempt implements ShouldQueue
         // Notify user of login from new location (if successful)
         if ($attempt->successful && $attempt->user && $this->isNewLocation($attempt)) {
             $this->notifyUserOfNewLocation($attempt);
+        }
+    }
+
+    /**
+     * Log a message using the auth channel if available, otherwise use default.
+     */
+    private function log(string $level, string $message, array $context = []): void
+    {
+        $channel = config('classicauth.logging.channel', 'default');
+
+        try {
+            // Try to use the configured channel
+            if ($channel && $channel !== 'default') {
+                Log::channel($channel)->$level($message, $context);
+            } else {
+                Log::$level($message, $context);
+            }
+        } catch (InvalidArgumentException) {
+            // Fallback to default channel if the configured channel doesn't exist
+            Log::$level($message, $context);
         }
     }
 
@@ -83,7 +104,7 @@ final class LogLoginAttempt implements ShouldQueue
      */
     private function handleSuspiciousActivity($attempt): void
     {
-        Log::channel('security')->warning('Suspicious login activity detected', [
+        $this->log('warning', 'Suspicious login activity detected', [
             'email' => $attempt->email,
             'ip_address' => $attempt->ip_address,
             'user_agent' => $attempt->user_agent,
@@ -125,7 +146,7 @@ final class LogLoginAttempt implements ShouldQueue
         // Example:
         // Mail::to($attempt->user)->queue(new NewLocationLogin($attempt));
 
-        Log::info('New location login detected', [
+        $this->log('info', 'New location login detected', [
             'user_id' => $attempt->user_id,
             'email' => $attempt->email,
             'ip_address' => $attempt->ip_address,

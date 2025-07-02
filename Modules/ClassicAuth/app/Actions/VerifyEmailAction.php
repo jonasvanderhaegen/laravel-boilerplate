@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Actions;
 
-use Illuminate\Auth\Events\Verified;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Auth\Events\Verified;
 use Modules\ClassicAuth\Events\EmailVerification\EmailVerificationCompleted;
 use Modules\ClassicAuth\Events\Security\TooManyFailedAttempts;
 use Modules\Core\Concerns\RateLimitDurations;
@@ -26,6 +25,7 @@ final class VerifyEmailAction
     use RateLimitDurations, WithRateLimiting;
 
     private const MAX_ATTEMPTS = 5;
+
     private const DECAY_SECONDS = 300; // 5 minutes
 
     /**
@@ -37,24 +37,26 @@ final class VerifyEmailAction
     {
         $ipAddress = request()->ip() ?? 'unknown';
         $userAgent = request()->userAgent() ?? 'unknown';
-        
+
         // Check rate limiting
         $this->checkRateLimit();
 
         // Find the user
         $user = User::find($id);
 
-        if (!$user) {
+        if (! $user) {
             logger()->warning('Email verification attempted for non-existent user', ['id' => $id]);
+
             return false;
         }
 
         // Check if the hash matches
-        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        if (! hash_equals((string) $hash, sha1((string) $user->getEmailForVerification()))) {
             logger()->warning('Email verification attempted with invalid hash', [
                 'user_id' => $user->id,
-                'email' => $user->email
+                'email' => $user->email,
             ]);
+
             return false;
         }
 
@@ -66,13 +68,13 @@ final class VerifyEmailAction
         // Mark email as verified
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
-            
+
             // Dispatch our custom event
             event(new EmailVerificationCompleted($user, $ipAddress, $userAgent));
-            
+
             logger()->info('Email verified successfully', [
                 'user_id' => $user->id,
-                'email' => $user->email
+                'email' => $user->email,
             ]);
 
             // Clear rate limiter
@@ -98,9 +100,9 @@ final class VerifyEmailAction
             $this->rateLimit($maxAttempts, $decaySeconds);
         } catch (TooManyRequestsException $e) {
             logger()->warning('Email verification rate limited', [
-                'ip' => request()->ip()
+                'ip' => request()->ip(),
             ]);
-            
+
             // Dispatch security event
             event(new TooManyFailedAttempts(
                 'email_verification_confirm',
@@ -109,7 +111,7 @@ final class VerifyEmailAction
                 $decaySeconds,
                 request()->ip() ?? 'unknown'
             ));
-            
+
             throw $e;
         }
     }

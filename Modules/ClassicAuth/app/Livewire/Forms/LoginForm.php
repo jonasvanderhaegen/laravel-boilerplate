@@ -25,7 +25,7 @@ final class LoginForm extends Form
     #[Validate(['required', 'email:rfc,dns', 'lowercase', 'max:255', new StrictEmailDomain()])]
     public string $email = '';
 
-    #[Validate(['required', 'string', 'min:8', 'confirmed', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/'])]
+    #[Validate(['required', 'string', 'min:8'])]
     public string $password = '';
 
     #[Validate('boolean')]
@@ -33,6 +33,43 @@ final class LoginForm extends Form
 
     #[Locked]
     public int $secondsUntilReset = 0;
+
+    /**
+     * Override validate to add Ray logging
+     */
+    public function validate($rules = null, $messages = [], $attributes = [])
+    {
+        // Ray: Log form validation attempt
+        ray()
+            ->label('[LoginForm::validate] Login Form Validation')
+            ->table([
+                'Email' => $this->email,
+                'Has Password' => filled($this->password) ? 'Yes' : 'No',
+                'Remember' => $this->remember ? 'Yes' : 'No',
+            ])
+            ->color('gray');
+
+        try {
+            $result = parent::validate($rules, $messages, $attributes);
+
+            // Ray: Log validation success
+            ray()
+                ->label('[LoginForm::validate -> success] ✅ Login Form Validation Passed')
+                ->color('green');
+
+            return $result;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Ray: Log validation failure
+            ray()
+                ->label('[LoginForm::validate -> catch ValidationException] ❌ Login Form Validation Failed')
+                ->table([
+                    'Errors' => $e->errors(),
+                ])
+                ->color('red');
+
+            throw $e;
+        }
+    }
 
     /**
      * Define validation rules for the form.
@@ -83,6 +120,15 @@ final class LoginForm extends Form
      */
     public function getCredentials(): LoginCredentials
     {
+        // Ray: Log credential creation
+        ray()
+            ->label('[LoginForm::getCredentials] Creating Login Credentials DTO')
+            ->table([
+                'Email' => $this->email,
+                'Remember' => $this->remember ? 'Yes' : 'No',
+            ])
+            ->color('gray');
+
         return new LoginCredentials(
             email: $this->email,
             password: $this->password,
@@ -95,6 +141,14 @@ final class LoginForm extends Form
      */
     public function resetForm(): void
     {
+        // Ray: Log form reset
+        ray()
+            ->label('[LoginForm::resetForm] Login Form Reset')
+            ->table([
+                'Email Preserved' => $this->email,
+            ])
+            ->color('gray');
+
         $this->reset('password');
         $this->resetValidation();
     }

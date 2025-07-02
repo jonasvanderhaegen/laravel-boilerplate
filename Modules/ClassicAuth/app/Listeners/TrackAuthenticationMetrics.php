@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Modules\ClassicAuth\Listeners;
 
 use Illuminate\Support\Facades\Cache;
-use Modules\ClassicAuth\Events\Login\LoginSucceeded;
 use Modules\ClassicAuth\Events\Login\LoginFailed;
-use Modules\ClassicAuth\Events\Registration\UserRegistered;
+use Modules\ClassicAuth\Events\Login\LoginSucceeded;
 use Modules\ClassicAuth\Events\PasswordReset\PasswordResetCompleted;
+use Modules\ClassicAuth\Events\Registration\UserRegistered;
 
 /**
  * Track authentication metrics for monitoring and analytics.
  */
-class TrackAuthenticationMetrics
+final class TrackAuthenticationMetrics
 {
     /**
      * Handle login success events.
@@ -22,10 +22,10 @@ class TrackAuthenticationMetrics
     {
         // Increment daily login counter
         $this->incrementDailyCounter('logins:successful');
-        
+
         // Track unique users
         $this->trackUniqueUser($event->user->id);
-        
+
         // Track by hour for analytics
         $this->incrementHourlyCounter('logins:successful');
     }
@@ -37,10 +37,10 @@ class TrackAuthenticationMetrics
     {
         // Increment failure counter
         $this->incrementDailyCounter('logins:failed');
-        
+
         // Track failure reasons
         $this->incrementDailyCounter("logins:failed:{$event->failureReason}");
-        
+
         // Track by hour for pattern detection
         $this->incrementHourlyCounter('logins:failed');
     }
@@ -52,7 +52,7 @@ class TrackAuthenticationMetrics
     {
         // Increment registration counter
         $this->incrementDailyCounter('registrations');
-        
+
         // Track registration source (if available)
         if ($event->autoLoggedIn) {
             $this->incrementDailyCounter('registrations:auto_login');
@@ -66,7 +66,7 @@ class TrackAuthenticationMetrics
     {
         // Increment password reset counter
         $this->incrementDailyCounter('password_resets');
-        
+
         // Track auto-login after reset
         if ($event->autoLoggedIn) {
             $this->incrementDailyCounter('password_resets:auto_login');
@@ -94,9 +94,9 @@ class TrackAuthenticationMetrics
      */
     private function incrementDailyCounter(string $key): void
     {
-        $cacheKey = "auth:metrics:daily:{$key}:" . now()->format('Y-m-d');
+        $cacheKey = "auth:metrics:daily:{$key}:".now()->format('Y-m-d');
         Cache::increment($cacheKey);
-        
+
         // Expire after 7 days
         Cache::put($cacheKey, Cache::get($cacheKey, 0), now()->addDays(7));
     }
@@ -106,9 +106,9 @@ class TrackAuthenticationMetrics
      */
     private function incrementHourlyCounter(string $key): void
     {
-        $cacheKey = "auth:metrics:hourly:{$key}:" . now()->format('Y-m-d:H');
+        $cacheKey = "auth:metrics:hourly:{$key}:".now()->format('Y-m-d:H');
         Cache::increment($cacheKey);
-        
+
         // Expire after 48 hours
         Cache::put($cacheKey, Cache::get($cacheKey, 0), now()->addHours(48));
     }
@@ -118,10 +118,10 @@ class TrackAuthenticationMetrics
      */
     private function trackUniqueUser(int $userId): void
     {
-        $cacheKey = "auth:metrics:unique_users:" . now()->format('Y-m-d');
+        $cacheKey = 'auth:metrics:unique_users:'.now()->format('Y-m-d');
         $users = Cache::get($cacheKey, []);
-        
-        if (!in_array($userId, $users)) {
+
+        if (! in_array($userId, $users)) {
             $users[] = $userId;
             Cache::put($cacheKey, $users, now()->addDays(7));
         }

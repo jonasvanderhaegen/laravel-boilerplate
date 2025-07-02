@@ -23,6 +23,7 @@ final class Register extends General
     public RegisterForm $form;
 
     public bool $showPassword = false;
+
     public bool $showPasswordConfirmation = false;
 
     /**

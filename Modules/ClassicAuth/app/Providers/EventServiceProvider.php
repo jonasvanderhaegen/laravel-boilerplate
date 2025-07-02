@@ -21,6 +21,7 @@ final class EventServiceProvider extends ServiceProvider
         \Modules\ClassicAuth\Events\Login\LoginSucceeded::class => [
             // Add listeners as needed
             \Modules\ClassicAuth\Listeners\CleanupAuthenticationData::class,
+            \Modules\ClassicAuth\Listeners\DetectUnusualLoginPatterns::class,
         ],
         \Modules\ClassicAuth\Events\Login\LoginFailed::class => [
             // Add listeners as needed
@@ -28,7 +29,7 @@ final class EventServiceProvider extends ServiceProvider
         \Modules\ClassicAuth\Events\Login\UserLoggedOut::class => [
             // Add listeners as needed
         ],
-        
+
         // Registration Events
         \Modules\ClassicAuth\Events\Registration\UserRegistering::class => [
             // Add listeners for pre-registration checks
@@ -40,7 +41,7 @@ final class EventServiceProvider extends ServiceProvider
         \Modules\ClassicAuth\Events\Registration\RegistrationFailed::class => [
             // Add listeners as needed
         ],
-        
+
         // Password Reset Events
         \Modules\ClassicAuth\Events\PasswordReset\PasswordResetRequested::class => [
             // Add listeners as needed
@@ -54,7 +55,7 @@ final class EventServiceProvider extends ServiceProvider
         \Modules\ClassicAuth\Events\PasswordReset\PasswordResetFailed::class => [
             // Add listeners as needed
         ],
-        
+
         // Email Verification Events
         \Modules\ClassicAuth\Events\EmailVerification\EmailVerificationRequested::class => [
             // Add listeners as needed
@@ -65,7 +66,7 @@ final class EventServiceProvider extends ServiceProvider
         \Modules\ClassicAuth\Events\EmailVerification\EmailVerificationCompleted::class => [
             // Add listeners as needed
         ],
-        
+
         // Security Events
         \Modules\ClassicAuth\Events\Security\SuspiciousActivityDetected::class => [
             \Modules\ClassicAuth\Listeners\Security\NotifySuspiciousActivity::class,
@@ -73,8 +74,16 @@ final class EventServiceProvider extends ServiceProvider
         \Modules\ClassicAuth\Events\Security\TooManyFailedAttempts::class => [
             // Add listeners for rate limiting responses
         ],
+
+        // User Notification Events
+        \Modules\ClassicAuth\Events\UserNotifications\NewDeviceLogin::class => [
+            // Add listeners as needed
+        ],
+        \Modules\ClassicAuth\Events\UserNotifications\UnusualLocationLogin::class => [
+            // Add listeners as needed
+        ],
     ];
-    
+
     /**
      * The subscribers to register.
      *
@@ -83,6 +92,8 @@ final class EventServiceProvider extends ServiceProvider
     protected $subscribe = [
         \Modules\ClassicAuth\Listeners\TrackAuthenticationMetrics::class,
         \Modules\ClassicAuth\Listeners\AuditAuthenticationEvents::class,
+        \Modules\ClassicAuth\Listeners\SendSecurityAlertEmail::class,
+        \Modules\ClassicAuth\Listeners\SendAuthWebhooks::class,
     ];
 
     /**

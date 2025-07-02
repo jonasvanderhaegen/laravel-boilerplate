@@ -12,6 +12,7 @@ namespace Modules\ClassicAuth\DataTransferObjects;
 final readonly class RegisterCredentials
 {
     public string $email;
+
     public string $name;
 
     public function __construct(

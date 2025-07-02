@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Actions;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Timebox;
 use Illuminate\Validation\ValidationException;
-use App\Models\User;
 use Modules\ClassicAuth\DataTransferObjects\RegisterCredentials;
 use Modules\ClassicAuth\DataTransferObjects\RegisterResult;
 use Modules\ClassicAuth\Events\Registration\RegistrationFailed;
@@ -36,6 +36,7 @@ final class RegisterUserAction
     use RateLimitDurations, WithRateLimiting;
 
     private const MAX_ATTEMPTS = 5;
+
     private const DECAY_SECONDS = 3600;
 
     public function __construct(
@@ -52,10 +53,10 @@ final class RegisterUserAction
     {
         $ipAddress = request()->ip() ?? 'unknown';
         $userAgent = request()->userAgent() ?? 'unknown';
-        
+
         // Dispatch registering event
         event(new UserRegistering($credentials, $ipAddress, $userAgent));
-        
+
         // Check rate limiting
         $this->checkRateLimit();
 
@@ -72,7 +73,7 @@ final class RegisterUserAction
                     $userAgent,
                     'email_taken'
                 ));
-                
+
                 throw ValidationException::withMessages([
                     'email' => __('auth.email_taken'),
                 ]);
@@ -101,8 +102,8 @@ final class RegisterUserAction
                 Auth::login($user, $credentials->remember);
                 $autoLoggedIn = true;
             }
-            
-            // Dispatch registered event  
+
+            // Dispatch registered event
             event(new UserRegistered($user, $ipAddress, $userAgent, $autoLoggedIn));
 
             // Clear rate limiter
@@ -133,7 +134,7 @@ final class RegisterUserAction
                 $decaySeconds,
                 request()->ip() ?? 'unknown'
             ));
-            
+
             // Dispatch failed event
             event(new RegistrationFailed(
                 '',
@@ -141,7 +142,7 @@ final class RegisterUserAction
                 request()->userAgent() ?? 'unknown',
                 'rate_limited'
             ));
-            
+
             throw $e;
         }
     }

@@ -219,7 +219,7 @@ return [
         */
         'store_login_data' => env('AUTH_STORE_SESSION_DATA', true),
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Notifications Configuration
@@ -228,7 +228,7 @@ return [
     | Settings for authentication-related notifications.
     |
     */
-    
+
     'notifications' => [
         /*
         |--------------------------------------------------------------------------
@@ -239,7 +239,7 @@ return [
         |
         */
         'admin_email' => env('AUTH_ADMIN_EMAIL', null),
-        
+
         /*
         |--------------------------------------------------------------------------
         | Suspicious Activity Notifications
@@ -249,7 +249,7 @@ return [
         |
         */
         'suspicious_activity_email' => env('AUTH_NOTIFY_SUSPICIOUS_ACTIVITY', false),
-        
+
         /*
         |--------------------------------------------------------------------------
         | Failed Login Threshold
@@ -260,7 +260,7 @@ return [
         */
         'failed_login_threshold' => env('AUTH_FAILED_LOGIN_THRESHOLD', 10),
     ],
-    
+
     /*
     |--------------------------------------------------------------------------
     | Logging Configuration
@@ -269,7 +269,7 @@ return [
     | Settings for authentication event logging.
     |
     */
-    
+
     'logging' => [
         /*
         |--------------------------------------------------------------------------
@@ -277,11 +277,13 @@ return [
         |--------------------------------------------------------------------------
         |
         | The log channel to use for authentication events.
-        | Set to null to use the default channel.
+        | Set to 'auth' to use a dedicated auth log file (automatically configured)
+        | Set to null or any other channel name to use that channel
+        | Leave empty to use the default Laravel log channel
         |
         */
-        'channel' => env('AUTH_LOG_CHANNEL', 'daily'),
-        
+        'channel' => env('AUTH_LOG_CHANNEL', null),
+
         /*
         |--------------------------------------------------------------------------
         | Log Level
@@ -291,5 +293,50 @@ return [
         |
         */
         'level' => env('AUTH_LOG_LEVEL', 'info'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure webhooks to send authentication events to external services.
+    |
+    */
+
+    'webhooks' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Webhook URLs
+        |--------------------------------------------------------------------------
+        |
+        | Set these to send events to external services.
+        | Leave null to disable specific webhooks.
+        |
+        */
+        'login_success' => env('AUTH_WEBHOOK_LOGIN_SUCCESS'),
+        'login_failure' => env('AUTH_WEBHOOK_LOGIN_FAILURE'),
+        'registration' => env('AUTH_WEBHOOK_REGISTRATION'),
+        'suspicious_activity' => env('AUTH_WEBHOOK_SUSPICIOUS_ACTIVITY'),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Webhook Secret
+        |--------------------------------------------------------------------------
+        |
+        | Secret key for signing webhook payloads.
+        |
+        */
+        'secret' => env('AUTH_WEBHOOK_SECRET'),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Webhook Timeout
+        |--------------------------------------------------------------------------
+        |
+        | Timeout in seconds for webhook requests.
+        |
+        */
+        'timeout' => env('AUTH_WEBHOOK_TIMEOUT', 10),
     ],
 ];

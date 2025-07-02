@@ -29,6 +29,7 @@ final class RequestPasswordResetAction
     use RateLimitDurations, WithRateLimiting;
 
     private const MAX_ATTEMPTS = 3;
+
     private const DECAY_SECONDS = 900; // 15 minutes
 
     public function __construct(
@@ -44,14 +45,14 @@ final class RequestPasswordResetAction
     {
         $ipAddress = request()->ip() ?? 'unknown';
         $userAgent = request()->userAgent() ?? 'unknown';
-        
+
         // Dispatch request event
         event(new PasswordResetRequested(
             $credentials->email,
             $ipAddress,
             $userAgent
         ));
-        
+
         // Check rate limiting
         $this->checkRateLimit($credentials);
 
@@ -73,10 +74,10 @@ final class RequestPasswordResetAction
             } else {
                 logger()->warning('Password reset link failed', [
                     'email' => $credentials->email,
-                    'status' => $status
+                    'status' => $status,
                 ]);
             }
-            
+
             // Dispatch link sent event (always, to prevent enumeration)
             event(new PasswordResetLinkSent(
                 $credentials->email,
@@ -112,9 +113,9 @@ final class RequestPasswordResetAction
         } catch (TooManyRequestsException $e) {
             logger()->warning('Password reset rate limited by IP', [
                 'email' => $credentials->email,
-                'ip' => request()->ip()
+                'ip' => request()->ip(),
             ]);
-            
+
             // Dispatch security event
             event(new TooManyFailedAttempts(
                 'password_reset',
@@ -123,7 +124,7 @@ final class RequestPasswordResetAction
                 $decaySeconds,
                 request()->ip() ?? 'unknown'
             ));
-            
+
             throw $e;
         }
 
@@ -137,9 +138,9 @@ final class RequestPasswordResetAction
             );
         } catch (TooManyRequestsException $e) {
             logger()->warning('Password reset rate limited by email', [
-                'email' => $credentials->email
+                'email' => $credentials->email,
             ]);
-            
+
             // Dispatch security event
             event(new TooManyFailedAttempts(
                 'password_reset',
@@ -148,7 +149,7 @@ final class RequestPasswordResetAction
                 $decaySeconds,
                 request()->ip() ?? 'unknown'
             ));
-            
+
             throw $e;
         }
     }

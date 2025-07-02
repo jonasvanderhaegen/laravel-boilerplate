@@ -23,6 +23,7 @@ final class PasswordReset extends General
     public PasswordResetForm $form;
 
     public bool $showPassword = false;
+
     public bool $showPasswordConfirmation = false;
 
     /**

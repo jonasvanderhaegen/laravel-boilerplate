@@ -4,22 +4,26 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Listeners;
 
-use Illuminate\Support\Facades\DB;
+use Exception;
+use Illuminate\Support\Facades\App;
 use Modules\ClassicAuth\Events\Login\LoginSucceeded;
 use Modules\ClassicAuth\Models\LoginAttempt;
+use Random\RandomException;
 
 /**
  * Clean up old authentication records periodically.
  */
-class CleanupAuthenticationData
+final class CleanupAuthenticationData
 {
     /**
      * Handle successful login to trigger cleanup.
+     *
+     * @throws RandomException
      */
     public function handle(LoginSucceeded $event): void
     {
         // Only run cleanup 1% of the time to avoid performance impact
-        if (rand(1, 100) !== 1) {
+        if (App::environment('production') && random_int(1, 100) !== 1) {
             return;
         }
 
@@ -32,23 +36,23 @@ class CleanupAuthenticationData
      */
     private function cleanupOldLoginAttempts(): void
     {
-        $retentionDays = config('classicauth.tracking.retention_days', 90);
-        
-        if (!$retentionDays) {
+        $retentionDays = config('classicauth.tracking.retention_days');
+
+        if (! $retentionDays) {
             return; // Keep records indefinitely
         }
 
         try {
             $deleted = LoginAttempt::where('created_at', '<', now()->subDays($retentionDays))
                 ->delete();
-                
+
             if ($deleted > 0) {
                 logger()->info('Cleaned up old login attempts', [
                     'deleted_count' => $deleted,
                     'retention_days' => $retentionDays,
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             logger()->error('Failed to cleanup login attempts', [
                 'error' => $e->getMessage(),
             ]);
@@ -63,7 +67,7 @@ class CleanupAuthenticationData
         // This would clean up old cached metrics
         // Implementation depends on your cache driver
         // For now, just log that we would do cleanup
-        
+
         logger()->debug('Authentication metrics cleanup would run here');
     }
 }

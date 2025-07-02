@@ -14,7 +14,9 @@
         "livewire/livewire": "^3.6",
         "mhmiton/laravel-modules-livewire": "^5.1",
         "nunomaduro/essentials": "^0.1.0",
-        "spatie/laravel-responsecache": "^7.7"
+        "spatie/laravel-responsecache": "^7.7",
+        "laravel/nightwatch": "^1.10",
+        "laravel/telescope": "^5.9"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",

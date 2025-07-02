@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\ClassicAuth\Livewire\Components;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -42,6 +41,16 @@ final class Login extends General
 
         // Redirect if already authenticated
         if (Auth::check()) {
+            // Ray: Log already authenticated redirect
+            ray()
+                ->label('[Login Component::mount -> if (Auth::check())] User Already Authenticated')
+                ->table([
+                    'User ID' => Auth::id(),
+                    'Email' => Auth::user()->email,
+                    'Redirecting To' => $this->getIntendedRoute(),
+                ])
+                ->color('orange');
+
             $this->redirect($this->getIntendedRoute(), navigate: true);
         }
     }
@@ -51,6 +60,16 @@ final class Login extends General
      */
     public function submit(LoginUserAction $action): void
     {
+        // Ray: Log form submission
+        ray()
+            ->label('[Login Component::submit] Login Form Submitted')
+            ->table([
+                'Email' => $this->form->email,
+                'Remember Me' => $this->form->remember ? 'Yes' : 'No',
+                'Has Password' => filled($this->form->password) ? 'Yes' : 'No',
+            ])
+            ->color('purple');
+
         try {
             // Validate form inputs
             $this->form->validate();
@@ -58,9 +77,29 @@ final class Login extends General
             // Execute login action
             $loginResult = $action->execute($this->form->getCredentials());
 
+            // Ray: Log login result
+            ray()
+                ->label('[Login Component::submit -> after execute] Login Result Received')
+                ->table([
+                    'User ID' => $loginResult->user->id,
+                    'User Email' => $loginResult->user->email,
+                    'Intended URL' => $loginResult->intendedUrl,
+                    'Was Remembered' => $loginResult->wasRemembered ? 'Yes' : 'No',
+                ])
+                ->color('green');
+
             // Validate intended URL for security
             $intendedUrl = $loginResult->intendedUrl;
             if (! $this->isInternalUrl($intendedUrl)) {
+                // Ray: Log external URL prevention
+                ray()
+                    ->label('[Login Component::submit -> if (!isInternalUrl)] External URL Prevented')
+                    ->table([
+                        'Original URL' => $intendedUrl,
+                        'Redirecting To' => $this->getDefaultRedirect(),
+                    ])
+                    ->color('orange');
+
                 $intendedUrl = $this->getDefaultRedirect();
             }
 
@@ -74,6 +113,17 @@ final class Login extends General
             $this->js("window.location.href = '".e($intendedUrl)."'");
 
         } catch (TooManyRequestsException $e) {
+            // Ray: Log rate limit exception
+            ray()
+                ->label('[Login Component::submit -> catch TooManyRequestsException] ⚠️ Rate Limit Exception')
+                ->table([
+                    'Email' => $this->form->email,
+                    'Seconds Until Reset' => $e->secondsUntilAvailable,
+                    'Minutes Until Reset' => ceil($e->minutesUntilAvailable),
+                    'Message' => $e->getMessage(),
+                ])
+                ->color('red');
+
             // Handle rate limiting
             $this->form->secondsUntilReset = $e->secondsUntilAvailable;
 
@@ -86,6 +136,15 @@ final class Login extends General
             $this->alertError(__('Too many login attempts. Please try again later.'));
 
         } catch (ValidationException $e) {
+            // Ray: Log validation exception
+            ray()
+                ->label('[Login Component::submit -> catch ValidationException] ❌ Validation Exception')
+                ->table([
+                    'Email' => $this->form->email,
+                    'Errors' => $e->errors(),
+                ])
+                ->color('red');
+
             // Reset password field on validation failure
             $this->form->resetForm();
 
@@ -106,6 +165,14 @@ final class Login extends General
     public function togglePasswordVisibility(): void
     {
         $this->showPassword = ! $this->showPassword;
+
+        // Ray: Log password visibility toggle
+        ray()
+            ->label('[Login Component::togglePasswordVisibility] Password Visibility Toggled')
+            ->table([
+                'Show Password' => $this->showPassword ? 'Yes' : 'No',
+            ])
+            ->color('gray');
     }
 
     /**
@@ -134,6 +201,14 @@ final class Login extends General
      */
     public function redirectToRegister(): void
     {
+        // Ray: Log redirect to register
+        ray()
+            ->label('[Login Component::redirectToRegister] Redirecting to Register')
+            ->table([
+                'Email to Preserve' => $this->form->email ?: 'None',
+            ])
+            ->color('blue');
+
         // Preserve email if entered
         if (filled($this->form->email)) {
             session()->flash('registration.email', $this->form->email);
@@ -148,6 +223,14 @@ final class Login extends General
      */
     public function redirectToPasswordReset(): void
     {
+        // Ray: Log redirect to password reset
+        ray()
+            ->label('[Login Component::redirectToPasswordReset] Redirecting to Password Reset')
+            ->table([
+                'Email to Preserve' => $this->form->email ?: 'None',
+            ])
+            ->color('blue');
+
         // Preserve email if entered
         if (filled($this->form->email)) {
             session()->flash('password.email', $this->form->email);

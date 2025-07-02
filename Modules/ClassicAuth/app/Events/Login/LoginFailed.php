@@ -23,7 +23,19 @@ final class LoginFailed
         public string $ipAddress,
         public string $userAgent,
         public string $failureReason
-    ) {}
+    ) {
+        // Ray: Log login failed event
+        ray()
+            ->label('🔴 Login Failed Event')
+            ->table([
+                'Email' => $this->email,
+                'IP Address' => $this->ipAddress,
+                'User Agent' => mb_substr($this->userAgent, 0, 50).'...',
+                'Failure Reason' => $this->failureReason,
+                'Timestamp' => now()->toDateTimeString(),
+            ])
+            ->color('red');
+    }
 
     /**
      * Get event data for logging.

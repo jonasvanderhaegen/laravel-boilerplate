@@ -6,13 +6,14 @@ namespace Modules\ClassicAuth\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Modules\ClassicAuth\Events\Registration\UserRegistered;
 use Illuminate\Support\Facades\Mail;
+use Modules\ClassicAuth\Events\Registration\UserRegistered;
+use Throwable;
 
 /**
  * Send welcome email after user registration.
  */
-class SendWelcomeEmail implements ShouldQueue
+final class SendWelcomeEmail implements ShouldQueue
 {
     use InteractsWithQueue;
 
@@ -34,7 +35,7 @@ class SendWelcomeEmail implements ShouldQueue
         Mail::to($event->user->email)
             ->send(new WelcomeEmail($event->user));
         */
-        
+
         // For now, just log that we would send a welcome email
         logger()->info('Welcome email would be sent', [
             'user_id' => $event->user->id,
@@ -46,7 +47,7 @@ class SendWelcomeEmail implements ShouldQueue
     /**
      * Handle a job failure.
      */
-    public function failed(UserRegistered $event, \Throwable $exception): void
+    public function failed(UserRegistered $event, Throwable $exception): void
     {
         logger()->error('Failed to send welcome email', [
             'user_id' => $event->user->id,
