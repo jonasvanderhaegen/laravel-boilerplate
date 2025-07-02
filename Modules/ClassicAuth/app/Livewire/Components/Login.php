@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\ClassicAuth\Livewire\Components;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -29,8 +30,9 @@ final class Login extends General
      */
     public function mount(): void
     {
-        // Initialize rate limit countdown using the form's method
-        $this->form->initRateLimitCountdown('attemptLogin', null, 'login');
+        // Initialize rate limit countdown
+        // This will check both email-based (if stored in session) and IP-based rate limiting
+        $this->form->initRateLimitCountdown('execute', LoginUserAction::class, 'login_email');
 
         // Pre-fill email if coming from registration or remembered
         if (session()->has('login.email')) {
@@ -114,7 +116,8 @@ final class Login extends General
     {
         return filled($this->form->email)
             && filled($this->form->password)
-            && ! $this->getErrorBag()->any();
+            && ! $this->getErrorBag()->any()
+            && $this->form->secondsUntilReset === 0;
     }
 
     /**
@@ -123,13 +126,7 @@ final class Login extends General
     #[Computed]
     public function viewPath(): string
     {
-        $base = 'classicauth::livewire.components.login';
-
-        if ($this->isMobile()) {
-            return "{$base}.mobile";
-        }
-
-        return $base;
+        return 'classicauth::livewire.components.login';
     }
 
     /**
@@ -176,6 +173,11 @@ final class Login extends General
      */
     public function render(): View
     {
+        // Update the countdown on each render
+        if ($this->form->secondsUntilReset > 0) {
+            $this->form->initRateLimitCountdown('execute', LoginUserAction::class, 'login_email');
+        }
+
         return view($this->viewPath)
             ->title(__('Sign in to your account'));
     }

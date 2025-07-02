@@ -205,8 +205,7 @@ final class LoginUserAction
             $this->clearRateLimiter('attemptLogin');
 
             // Clear email-based rate limiter
-            $emailKey = 'login_email:'.mb_strtolower($user->email);
-            RateLimiter::clear($emailKey);
+            $this->clearEmailRateLimiter($user->email, 'login');
 
             // Update last login timestamp if columns exist
             $updateData = [];

@@ -9,49 +9,74 @@ use Modules\Core\Exceptions\TooManyRequestsException;
 
 trait WithRateLimiting
 {
-    // Livewire will pick this up as a public property on the component
+    // Optional: Livewire components can use this as a public property
     public int $secondsUntilReset = 0;
 
     /**
-     * Call this in your component's mount or constructor
-     * to initialize the countdown for a given method.
+     * Check rate limit status for a specific key.
+     * Returns seconds until available, or 0 if not rate limited.
+     */
+    public function checkRateLimitStatus(string $key): int
+    {
+        if (RateLimiter::tooManyAttempts($key, 1)) {
+            return RateLimiter::availableIn($key);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Initialize rate limit countdown for components that need it.
+     * This checks both IP and email-based rate limiting.
      */
     public function initRateLimitCountdown(
         ?string $method = null,
         ?string $component = null,
-        string|bool $auth = false
+        ?string $emailKey = null
     ): void {
-
-        if (session()->has("{$auth}_email") && $auth) {
-            $email = session("{$auth}_email");
-            $key = "{$auth}_email:$email";
-
-            if (RateLimiter::availableIn($key)) {
-                $this->secondsUntilReset = RateLimiter::availableIn($key);
-
+        // First check email-based rate limiting if we have a stored email
+        if ($emailKey && session()->has($emailKey)) {
+            $email = session($emailKey);
+            $emailRateLimitKey = $this->getEmailRateLimitKey($email, $emailKey);
+            
+            $seconds = $this->checkRateLimitStatus($emailRateLimitKey);
+            if ($seconds > 0) {
+                $this->secondsUntilReset = $seconds;
                 return;
             }
         }
 
-        $this->secondsUntilReset = $this->secondsUntilReset($method, $component);
+        // Then check IP-based rate limiting
+        $ipKey = $this->getRateLimitKey($method, $component);
+        $this->secondsUntilReset = $this->checkRateLimitStatus($ipKey);
     }
 
     /**
-     * Clear a Livewire‐specific rate limit counter.
+     * Clear rate limit counters.
      */
     public function clearRateLimiter(?string $method = null, ?string $component = null): void
     {
-        $method ??= debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, limit: 2)[1]['function'];
+        $method ??= $this->getCallingMethod();
         $component ??= static::class;
 
         $key = $this->getRateLimitKey($method, $component);
-
         RateLimiter::clear($key);
     }
 
     /**
-     * Throttle by email: max $maxAttempts sends per $decaySeconds seconds.
-     *
+     * Clear email-based rate limiter.
+     */
+    public function clearEmailRateLimiter(string $email, string $prefix = 'login'): void
+    {
+        $key = $this->getEmailRateLimitKey($email, $prefix);
+        RateLimiter::clear($key);
+        
+        // Also clear from session
+        session()->forget("{$prefix}_email");
+    }
+
+    /**
+     * Throttle by email with better key management.
      *
      * @throws TooManyRequestsException
      */
@@ -59,22 +84,20 @@ trait WithRateLimiting
         int $maxAttempts,
         int $decaySeconds,
         string $email,
-        string|bool $auth
+        string $prefix = 'login'
     ): void {
-        $key = "{$auth}_email:$email";
+        $key = $this->getEmailRateLimitKey($email, $prefix);
 
         if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
             $seconds = RateLimiter::availableIn($key);
 
-            // Store in session so mount() / initRateLimitCountdown() can pick it up
-            session([
-                "{$auth}_email" => $email,
-            ]);
+            // Store in session for later retrieval
+            session(["{$prefix}_email" => $email]);
 
             throw new TooManyRequestsException(
                 static::class,
                 'rateLimitByEmail',
-                request()->ip(),
+                request()->ip() ?? 'unknown',
                 $seconds
             );
         }
@@ -83,34 +106,7 @@ trait WithRateLimiting
     }
 
     /**
-    {
-    /**
-     * Build the unique key for a method/component/IP combination.
-     */
-    protected function getRateLimitKey(?string $method, ?string $component = null): string
-    {
-        $method ??= debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, limit: 2)[1]['function'];
-        $component ??= static::class;
-
-        return 'livewire-rate-limiter:'.sha1($component.'|'.$method.'|'.request()->ip());
-    }
-
-    /**
-     * Hit (increment) the rate limiter for a given Livewire method.
-     */
-    protected function hitRateLimiter(?string $method = null, int $decaySeconds = 60, ?string $component = null): void
-    {
-        $method ??= debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, limit: 2)[1]['function'];
-        $component ??= static::class;
-
-        $key = $this->getRateLimitKey($method, $component);
-
-        RateLimiter::hit($key, $decaySeconds);
-    }
-
-    /**
-     * General-purpose rate limit check/hit for a Livewire method.
-     *
+     * General-purpose rate limiting.
      *
      * @throws TooManyRequestsException
      */
@@ -120,31 +116,72 @@ trait WithRateLimiting
         ?string $method = null,
         ?string $component = null
     ): void {
-        $method ??= debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, limit: 2)[1]['function'];
+        $method ??= $this->getCallingMethod();
         $component ??= static::class;
 
         $key = $this->getRateLimitKey($method, $component);
 
         if (RateLimiter::tooManyAttempts($key, $maxAttempts)) {
-            $ip = request()->ip();
             $secondsUntilAvailable = RateLimiter::availableIn($key);
 
-            throw new TooManyRequestsException($component, $method, $ip, $secondsUntilAvailable);
+            throw new TooManyRequestsException(
+                $component, 
+                $method, 
+                request()->ip() ?? 'unknown', 
+                $secondsUntilAvailable
+            );
         }
 
-        $this->hitRateLimiter($method, $decaySeconds, $component);
+        RateLimiter::hit($key, $decaySeconds);
     }
 
     /**
-     * How many seconds until a Livewire method is available again.
+     * Hit (increment) the rate limiter.
      */
-    private function secondsUntilReset(?string $method = null, ?string $component = null): int
+    protected function hitRateLimiter(?string $method = null, int $decaySeconds = 60, ?string $component = null): void
     {
-        $method ??= debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'];
+        $method ??= $this->getCallingMethod();
         $component ??= static::class;
 
         $key = $this->getRateLimitKey($method, $component);
+        RateLimiter::hit($key, $decaySeconds);
+    }
 
+    /**
+     * Build rate limit key for method/component/IP combination.
+     */
+    protected function getRateLimitKey(?string $method = null, ?string $component = null): string
+    {
+        $method ??= $this->getCallingMethod();
+        $component ??= static::class;
+        $ip = request()->ip() ?? 'unknown';
+
+        return "rate-limiter:{$component}:{$method}:{$ip}";
+    }
+
+    /**
+     * Build rate limit key for email-based limiting.
+     */
+    protected function getEmailRateLimitKey(string $email, string $prefix = 'login'): string
+    {
+        return "{$prefix}_email:" . mb_strtolower($email);
+    }
+
+    /**
+     * Get the calling method name using backtrace.
+     */
+    private function getCallingMethod(): string
+    {
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+        return $trace[2]['function'] ?? 'unknown';
+    }
+
+    /**
+     * Get seconds until rate limit resets.
+     */
+    private function secondsUntilReset(?string $method = null, ?string $component = null): int
+    {
+        $key = $this->getRateLimitKey($method, $component);
         return RateLimiter::availableIn($key);
     }
 }
