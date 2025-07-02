@@ -15,6 +15,10 @@ use Illuminate\Support\Timebox;
 use Illuminate\Validation\ValidationException;
 use Modules\ClassicAuth\DataTransferObjects\LoginCredentials;
 use Modules\ClassicAuth\DataTransferObjects\LoginResult;
+use Modules\ClassicAuth\Events\Login\LoginFailed;
+use Modules\ClassicAuth\Events\Login\LoginSucceeded;
+use Modules\ClassicAuth\Events\Security\SuspiciousActivityDetected;
+use Modules\ClassicAuth\Events\Security\TooManyFailedAttempts;
 use Modules\ClassicAuth\Models\LoginAttempt;
 use Modules\Core\Concerns\RateLimitDurations;
 use Modules\Core\Concerns\WithRateLimiting;
@@ -83,6 +87,14 @@ final class LoginUserAction
                         LoginAttempt::FAILURE_INVALID_CREDENTIALS
                     );
                 }
+
+                // Dispatch failed login event
+                event(new LoginFailed(
+                    $credentials->email,
+                    $ipAddress,
+                    $userAgent,
+                    'invalid_credentials'
+                ));
 
                 // Don't call returnEarly() for failures - maintain full timing
                 throw ValidationException::withMessages([
@@ -157,6 +169,24 @@ final class LoginUserAction
                     LoginAttempt::FAILURE_RATE_LIMITED
                 );
             }
+            
+            // Dispatch security event
+            event(new TooManyFailedAttempts(
+                'login',
+                $ipAddress,
+                $ipSettings['max_attempts'],
+                $ipSettings['decay_seconds'],
+                $ipAddress
+            ));
+            
+            // Dispatch failed login event
+            event(new LoginFailed(
+                $credentials->email,
+                $ipAddress,
+                $userAgent,
+                'rate_limited'
+            ));
+            
             throw $e;
         }
     }
@@ -187,6 +217,46 @@ final class LoginUserAction
                     LoginAttempt::FAILURE_RATE_LIMITED
                 );
             }
+            
+            // Check for suspicious activity
+            $recentFailures = LoginAttempt::where('email', $credentials->email)
+                ->where('successful', false)
+                ->where('created_at', '>=', now()->subHours(1))
+                ->count();
+                
+            if ($recentFailures > 10) {
+                event(new SuspiciousActivityDetected(
+                    'brute_force',
+                    $ipAddress,
+                    $credentials->email,
+                    ['recent_failures' => $recentFailures]
+                ));
+            }
+            
+            // Check for multiple IPs
+            $recentIPs = LoginAttempt::where('email', $credentials->email)
+                ->where('created_at', '>=', now()->subHours(6))
+                ->distinct('ip_address')
+                ->count('ip_address');
+                
+            if ($recentIPs > 5) {
+                event(new SuspiciousActivityDetected(
+                    'multiple_ips',
+                    $ipAddress,
+                    $credentials->email,
+                    ['ip_count' => $recentIPs]
+                ));
+            }
+            
+            // Dispatch security event
+            event(new TooManyFailedAttempts(
+                'login',
+                $credentials->email,
+                $emailSettings['max_attempts'],
+                $emailSettings['decay_seconds'],
+                $ipAddress
+            ));
+            
             throw $e;
         }
     }
@@ -240,6 +310,9 @@ final class LoginUserAction
         // Dispatch login event
         event(new Login(Auth::guard(), $user, $remember));
         event(new Authenticated(Auth::guard(), $user));
+        
+        // Dispatch our custom success event
+        event(new LoginSucceeded($user, $ipAddress, $userAgent, $remember));
 
         // Note: Session regeneration is handled by the calling component
         // to avoid Livewire CSRF token issues

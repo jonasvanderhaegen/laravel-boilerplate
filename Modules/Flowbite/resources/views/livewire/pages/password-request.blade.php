@@ -5,7 +5,7 @@
             Flowbite
         </a>
 
-        <livewire:classicauth::components.register />
+        <livewire:classicauth::components.password-request />
 
     </div>
 </section>

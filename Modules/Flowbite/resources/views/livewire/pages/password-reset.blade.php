@@ -5,7 +5,7 @@
             Flowbite
         </a>
 
-        <livewire:classicauth::components.register />
+        <livewire:classicauth::components.password-reset :token="$token" :email="$email" />
 
     </div>
 </section>

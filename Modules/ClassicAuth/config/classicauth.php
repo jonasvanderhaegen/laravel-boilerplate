@@ -36,6 +36,29 @@ return [
         |
         */
         'logout_redirect' => env('AUTH_LOGOUT_REDIRECT', '/'),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Registration Settings
+        |--------------------------------------------------------------------------
+        */
+        'register_redirect' => env('AUTH_REGISTER_REDIRECT', 'dashboard'),
+        'auto_login_after_register' => env('AUTH_AUTO_LOGIN_AFTER_REGISTER', true),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Password Reset Settings
+        |--------------------------------------------------------------------------
+        */
+        'password_reset_redirect' => env('AUTH_PASSWORD_RESET_REDIRECT', 'login'),
+        'auto_login_after_reset' => env('AUTH_AUTO_LOGIN_AFTER_RESET', true),
+
+        /*
+        |--------------------------------------------------------------------------
+        | Email Verification Settings
+        |--------------------------------------------------------------------------
+        */
+        'verified_redirect' => env('AUTH_VERIFIED_REDIRECT', 'dashboard'),
     ],
 
     /*
@@ -76,6 +99,36 @@ return [
         'email' => [
             'max_attempts' => env('AUTH_EMAIL_MAX_ATTEMPTS', 15),
             'decay_seconds' => env('AUTH_EMAIL_DECAY_SECONDS', 3600),
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Registration Rate Limiting
+        |--------------------------------------------------------------------------
+        */
+        'register' => [
+            'max_attempts' => env('AUTH_REGISTER_MAX_ATTEMPTS', 5),
+            'decay_seconds' => env('AUTH_REGISTER_DECAY_SECONDS', 3600),
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Password Reset Rate Limiting
+        |--------------------------------------------------------------------------
+        */
+        'password_reset' => [
+            'max_attempts' => env('AUTH_PASSWORD_RESET_MAX_ATTEMPTS', 3),
+            'decay_seconds' => env('AUTH_PASSWORD_RESET_DECAY_SECONDS', 900),
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Email Verification Rate Limiting
+        |--------------------------------------------------------------------------
+        */
+        'email_verification' => [
+            'max_attempts' => env('AUTH_EMAIL_VERIFICATION_MAX_ATTEMPTS', 3),
+            'decay_seconds' => env('AUTH_EMAIL_VERIFICATION_DECAY_SECONDS', 300),
         ],
     ],
 
@@ -165,5 +218,78 @@ return [
         |
         */
         'store_login_data' => env('AUTH_STORE_SESSION_DATA', true),
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Notifications Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Settings for authentication-related notifications.
+    |
+    */
+    
+    'notifications' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Email
+        |--------------------------------------------------------------------------
+        |
+        | Email address to receive security notifications.
+        |
+        */
+        'admin_email' => env('AUTH_ADMIN_EMAIL', null),
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Suspicious Activity Notifications
+        |--------------------------------------------------------------------------
+        |
+        | Enable email notifications for suspicious activities.
+        |
+        */
+        'suspicious_activity_email' => env('AUTH_NOTIFY_SUSPICIOUS_ACTIVITY', false),
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Failed Login Threshold
+        |--------------------------------------------------------------------------
+        |
+        | Number of failed login attempts before notification is sent.
+        |
+        */
+        'failed_login_threshold' => env('AUTH_FAILED_LOGIN_THRESHOLD', 10),
+    ],
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Logging Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Settings for authentication event logging.
+    |
+    */
+    
+    'logging' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Auth Log Channel
+        |--------------------------------------------------------------------------
+        |
+        | The log channel to use for authentication events.
+        | Set to null to use the default channel.
+        |
+        */
+        'channel' => env('AUTH_LOG_CHANNEL', 'daily'),
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Log Level
+        |--------------------------------------------------------------------------
+        |
+        | Minimum log level for authentication events.
+        |
+        */
+        'level' => env('AUTH_LOG_LEVEL', 'info'),
     ],
 ];

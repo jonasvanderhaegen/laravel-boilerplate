@@ -8,11 +8,15 @@ Refactored the ClassicAuth Livewire login components to follow the action-driven
 ### 1. Created Action Layer
 - **`LoginUserAction`**: Encapsulates all authentication business logic
   - IP-based rate limiting
-  - Email-based rate limiting
+  - Email-based rate limiting  
   - Authentication attempt
   - Session management
   - Event dispatching
   - User state updates (last login timestamp, IP)
+  - **Timing attack prevention using Laravel's Timebox**
+    - Ensures consistent 300ms minimum execution time
+    - Uses `returnEarly()` for successful logins only
+    - Maintains full timing for failed attempts
 
 ### 2. Created Data Transfer Object
 - **`LoginCredentials`**: Type-safe DTO for login data
@@ -157,6 +161,9 @@ php artisan vendor:publish --tag=classicauth-config
    - `AUTH_EMAIL_IPS_THRESHOLD`: Suspicious email threshold (default: 5)
    - `AUTH_TRACKING_RETENTION_DAYS`: How long to keep records (default: 90)
 
+4. **Security**
+   - `AUTH_MIN_TIME_MS`: Minimum authentication time in milliseconds (default: 300)
+
 ## Database Migrations Required
 
 Run the migrations to create the required tables:
@@ -171,6 +178,21 @@ php artisan migrate --path=Modules/ClassicAuth/database/migrations/
 This will create:
 - `login_attempts` table for tracking login attempts
 - Add `last_login_at` and `last_login_ip` columns to the users table
+
+## Implementation Details
+
+### Dependency Injection
+The `LoginUserAction` is registered in the service container with its Timebox dependency:
+```php
+// In PrimaryServiceProvider
+$this->app->bind(LoginUserAction::class, function ($app) {
+    return new LoginUserAction(
+        $app->make(Timebox::class)
+    );
+});
+```
+
+This allows Livewire to automatically inject the properly configured action.
 
 ## Usage Examples
 
@@ -192,6 +214,30 @@ $userLogins = LoginAttempt::successful()
 ### Event Listener Registration
 The event listener is automatically registered in the module's EventServiceProvider.
 
+### Timing Attack Prevention Middleware
+Use the middleware for endpoints that need timing protection but don't use Timebox internally:
+
+```php
+// Protect password reset endpoint
+Route::post('/password/email', SendPasswordResetController::class)
+    ->middleware('classicauth.timing:300');
+
+// Protect email availability checks
+Route::post('/check-email', CheckEmailController::class)
+    ->middleware('classicauth.timing:200');
+
+// Protect API token validation
+Route::post('/api/validate-token', ValidateTokenController::class)
+    ->middleware('classicauth.timing:250');
+
+// Register middleware in Kernel.php
+protected $middlewareAliases = [
+    'classicauth.timing' => \Modules\ClassicAuth\Http\Middleware\EnforceMinimumExecutionTime::class,
+];
+```
+
+**Note**: Don't use this middleware on routes that already use Timebox internally (like login), as it would add unnecessary delay.
+
 ### Cleanup Command
 To clean up old login attempts based on retention policy:
 ```bash
@@ -212,16 +258,38 @@ $schedule->command('classicauth:cleanup-login-attempts')->daily();
 
 ## Security Features
 
-1. **Suspicious Activity Detection**
+1. **Timing Attack Prevention with Laravel Timebox**
+   - Uses Laravel's built-in Timebox for constant-time execution
+   - Default 300ms minimum execution time (configurable)
+   - Failed logins always take full minimum time
+   - Successful logins can return early for better UX
+   - Protects against user enumeration attacks
+   - Handles exceptions while maintaining timing consistency
+
+### When to Use Timebox vs Middleware
+
+**Use Timebox when:**
+- You need fine-grained control (like `returnEarly()` for success cases)
+- The logic is complex with multiple code paths
+- You're building reusable actions or services
+- Example: Login, complex API authentication
+
+**Use the Middleware when:**
+- You need simple timing protection for an entire endpoint
+- The endpoint always takes roughly the same time
+- You don't need different timing for success/failure
+- Example: Password reset, email checks, simple validations
+
+2. **Suspicious Activity Detection**
    - Multiple failed attempts from same IP
    - Failed attempts from multiple IPs for same email
    - Configurable thresholds
 
-2. **New Location Detection**
+3. **New Location Detection**
    - Tracks IPs used by each user
    - Can trigger notifications for new locations
 
-3. **Comprehensive Logging**
+4. **Comprehensive Logging**
    - All attempts logged with context
    - Separate security log channel for suspicious activity
 
