@@ -39,11 +39,6 @@ final class Register extends General
             $this->form->email = session()->get('registration.email');
             session()->forget('registration.email');
         }
-
-        // Redirect if already authenticated
-        if (Auth::check()) {
-            $this->redirect($this->getDefaultRedirect(), navigate: true);
-        }
     }
 
     /**

@@ -36,11 +36,6 @@ final class PasswordRequest extends General
             $this->form->email = session()->get('password.email');
             session()->forget('password.email');
         }
-
-        // Redirect if already authenticated
-        if (Auth::check()) {
-            $this->redirect(route('dashboard'), navigate: true);
-        }
     }
 
     /**

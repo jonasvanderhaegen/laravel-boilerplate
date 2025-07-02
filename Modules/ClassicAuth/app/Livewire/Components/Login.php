@@ -38,21 +38,6 @@ final class Login extends General
             $this->form->email = session()->get('login.email');
             session()->forget('login.email');
         }
-
-        // Redirect if already authenticated
-        if (Auth::check()) {
-            // Ray: Log already authenticated redirect
-            ray()
-                ->label('[Login Component::mount -> if (Auth::check())] User Already Authenticated')
-                ->table([
-                    'User ID' => Auth::id(),
-                    'Email' => Auth::user()->email,
-                    'Redirecting To' => $this->getIntendedRoute(),
-                ])
-                ->color('orange');
-
-            $this->redirect($this->getIntendedRoute(), navigate: true);
-        }
     }
 
     /**
