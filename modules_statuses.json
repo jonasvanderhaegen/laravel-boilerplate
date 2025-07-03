@@ -2,6 +2,5 @@
     "Core": true,
     "Flowbite": true,
     "ClassicAuth": true,
-    "BanUser": true,
     "Admin": true
 }
