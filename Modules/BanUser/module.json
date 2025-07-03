@@ -1,0 +1,11 @@
+{
+    "name": "BanUser",
+    "alias": "banuser",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\BanUser\\Providers\\PrimaryServiceProvider"
+    ],
+    "files": []
+}

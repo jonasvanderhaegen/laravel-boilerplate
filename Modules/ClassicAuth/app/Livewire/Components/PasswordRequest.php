@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\ClassicAuth\Livewire\Components;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;

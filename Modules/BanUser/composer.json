@@ -1,0 +1,30 @@
+{
+    "name": "project/banuser",
+    "description": "",
+    "authors": [
+        {
+            "name": "",
+            "email": ""
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\BanUser\\": "app/",
+            "Modules\\BanUser\\Database\\Factories\\": "database/factories/",
+            "Modules\\BanUser\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\BanUser\\Tests\\": "tests/"
+        }
+    }
+}
