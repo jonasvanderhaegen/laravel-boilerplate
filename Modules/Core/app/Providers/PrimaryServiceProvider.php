@@ -25,6 +25,7 @@ final class PrimaryServiceProvider extends ServiceProvider
         $this->registerCommandSchedules();
         $this->registerTranslations();
         $this->registerConfig();
+        $this->registerViews();
     }
 
     /**

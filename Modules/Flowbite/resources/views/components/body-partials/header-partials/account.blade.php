@@ -56,6 +56,41 @@
                 <ul
                     class="mb-4 border-b border-gray-100 pb-4 text-sm font-medium sm:mb-0 sm:border-0 sm:pb-0"
                 >
+                    <li class="px-4 pb-2">
+                        <p
+                            class="text-base font-medium text-gray-900 dark:text-white"
+                        >
+                            Dashboard
+                        </p>
+                    </li>
+
+
+                    <li>
+                        <a
+                            href="{{ route('flowbite.dashboard') }}"
+                            wire:navigate.hover
+                            title=""
+                            class="group flex items-center gap-2 px-4 py-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
+                        >
+                            <svg
+                                class="h-4 w-4 text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke="currentColor"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M10 21v-9m3-4H7.5a2.5 2.5 0 1 1 0-5c1.5 0 2.9 1.3 3.9 2.5M14 21v-9m-9 0h14v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8ZM4 8h16a1 1 0 0 1 1 1v3H3V9a1 1 0 0 1 1-1Zm12.2-5c-3 0-5.5 5-5.5 5h5.5a2.5 2.5 0 0 0 0-5Z"
+                                />
+                            </svg>
+                            Overview
+                        </a>
+                    </li>
+
                     {{--
                     @auth
                         @if (auth()->user()->onboarding()->inProgress())
