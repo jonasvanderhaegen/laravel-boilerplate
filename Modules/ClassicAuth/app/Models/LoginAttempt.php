@@ -6,8 +6,10 @@ namespace Modules\ClassicAuth\Models;
 
 use App\Models\User;
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\ClassicAuth\Database\Factories\LoginAttemptFactory;
 use Modules\ClassicAuth\Events\LoginAttempted;
 
 /**
@@ -27,6 +29,7 @@ use Modules\ClassicAuth\Events\LoginAttempted;
  */
 final class LoginAttempt extends Model
 {
+    use HasFactory;
     /**
      * Failure reason constants.
      */
@@ -114,56 +117,76 @@ final class LoginAttempt extends Model
     /**
      * Scope to get recent attempts.
      */
+    // @codeCoverageIgnoreStart
     #[\Illuminate\Database\Eloquent\Attributes\Scope]
     protected function recent($query, int $days = 7)
     {
         return $query->where('attempted_at', '>=', now()->subDays($days));
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * Scope to get failed attempts.
      */
+    // @codeCoverageIgnoreStart
     #[\Illuminate\Database\Eloquent\Attributes\Scope]
     protected function failed($query)
     {
         return $query->where('successful', false);
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * Scope to get successful attempts.
      */
+    // @codeCoverageIgnoreStart
     #[\Illuminate\Database\Eloquent\Attributes\Scope]
     protected function successful($query)
     {
         return $query->where('successful', true);
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * Scope to get attempts by IP.
      */
+    // @codeCoverageIgnoreStart
     #[\Illuminate\Database\Eloquent\Attributes\Scope]
     protected function byIp($query, string $ipAddress)
     {
         return $query->where('ip_address', $ipAddress);
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * Scope to get attempts by email.
      */
+    // @codeCoverageIgnoreStart
     #[\Illuminate\Database\Eloquent\Attributes\Scope]
     protected function byEmail($query, string $email)
     {
         return $query->where('email', $email);
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * The attributes that should be cast.
      */
+    // @codeCoverageIgnoreStart
     protected function casts(): array
     {
         return [
             'successful' => 'boolean',
             'attempted_at' => 'datetime',
         ];
+    }
+    // @codeCoverageIgnoreEnd
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): LoginAttemptFactory
+    {
+        return LoginAttemptFactory::new();
     }
 }

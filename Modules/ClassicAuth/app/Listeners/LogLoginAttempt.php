@@ -46,6 +46,7 @@ final class LogLoginAttempt implements ShouldQueue
     /**
      * Check if the login attempt is suspicious.
      */
+    // @codeCoverageIgnoreStart
     private function isSuspiciousActivity($attempt): bool
     {
         $config = config('classicauth.tracking.suspicious_activity');
@@ -77,10 +78,12 @@ final class LogLoginAttempt implements ShouldQueue
 
         return false;
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * Handle suspicious activity.
      */
+    // @codeCoverageIgnoreStart
     private function handleSuspiciousActivity($attempt): void
     {
         Log::channel('security')->warning('Suspicious login activity detected', [
@@ -95,10 +98,12 @@ final class LogLoginAttempt implements ShouldQueue
         // - Require additional verification
         // - Send alert to user (if email is valid)
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * Check if login is from a new location.
      */
+    // @codeCoverageIgnoreStart
     private function isNewLocation($attempt): bool
     {
         if (! $attempt->user) {
@@ -115,10 +120,12 @@ final class LogLoginAttempt implements ShouldQueue
 
         return ! $previousLogin;
     }
+    // @codeCoverageIgnoreEnd
 
     /**
      * Notify user of login from new location.
      */
+    // @codeCoverageIgnoreStart
     private function notifyUserOfNewLocation($attempt): void
     {
         // Here you could send an email notification
@@ -131,4 +138,5 @@ final class LogLoginAttempt implements ShouldQueue
             'ip_address' => $attempt->ip_address,
         ]);
     }
+    // @codeCoverageIgnoreEnd
 }

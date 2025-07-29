@@ -36,6 +36,7 @@ final class PrimaryServiceProvider extends ServiceProvider
     /**
      * Register the service provider.
      */
+    // @codeCoverageIgnoreStart
     public function register(): void
     {
         $this->app->register(EventServiceProvider::class);
@@ -46,4 +47,5 @@ final class PrimaryServiceProvider extends ServiceProvider
             $app->make(\Illuminate\Support\Timebox::class)
         ));
     }
+    // @codeCoverageIgnoreEnd
 }

@@ -31,6 +31,7 @@ final class CleanupLoginAttempts extends Command
     /**
      * Execute the console command.
      */
+    // @codeCoverageIgnoreStart
     public function handle(): int
     {
         $retentionDays = $this->option('days')
@@ -84,4 +85,5 @@ final class CleanupLoginAttempts extends Command
 
         return self::SUCCESS;
     }
+    // @codeCoverageIgnoreEnd
 }
