@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\ClassicAuth\Livewire\Components;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;

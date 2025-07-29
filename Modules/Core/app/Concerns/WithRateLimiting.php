@@ -38,10 +38,11 @@ trait WithRateLimiting
         if ($emailKey && session()->has($emailKey)) {
             $email = session($emailKey);
             $emailRateLimitKey = $this->getEmailRateLimitKey($email, $emailKey);
-            
+
             $seconds = $this->checkRateLimitStatus($emailRateLimitKey);
             if ($seconds > 0) {
                 $this->secondsUntilReset = $seconds;
+
                 return;
             }
         }
@@ -70,7 +71,7 @@ trait WithRateLimiting
     {
         $key = $this->getEmailRateLimitKey($email, $prefix);
         RateLimiter::clear($key);
-        
+
         // Also clear from session
         session()->forget("{$prefix}_email");
     }
@@ -125,9 +126,9 @@ trait WithRateLimiting
             $secondsUntilAvailable = RateLimiter::availableIn($key);
 
             throw new TooManyRequestsException(
-                $component, 
-                $method, 
-                request()->ip() ?? 'unknown', 
+                $component,
+                $method,
+                request()->ip() ?? 'unknown',
                 $secondsUntilAvailable
             );
         }
@@ -164,7 +165,7 @@ trait WithRateLimiting
      */
     protected function getEmailRateLimitKey(string $email, string $prefix = 'login'): string
     {
-        return "{$prefix}_email:" . mb_strtolower($email);
+        return "{$prefix}_email:".mb_strtolower($email);
     }
 
     /**
@@ -173,6 +174,7 @@ trait WithRateLimiting
     private function getCallingMethod(): string
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+
         return $trace[2]['function'] ?? 'unknown';
     }
 
@@ -182,6 +184,7 @@ trait WithRateLimiting
     private function secondsUntilReset(?string $method = null, ?string $component = null): int
     {
         $key = $this->getRateLimitKey($method, $component);
+
         return RateLimiter::availableIn($key);
     }
 }

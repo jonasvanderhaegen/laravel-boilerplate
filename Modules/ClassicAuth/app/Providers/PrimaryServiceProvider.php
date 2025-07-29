@@ -42,7 +42,7 @@ final class PrimaryServiceProvider extends ServiceProvider
         $this->app->register(RouteServiceProvider::class);
 
         // Bind LoginUserAction with Timebox dependency
-        $this->app->bind(fn($app): \Modules\ClassicAuth\Actions\LoginUserAction => new \Modules\ClassicAuth\Actions\LoginUserAction(
+        $this->app->bind(fn ($app): \Modules\ClassicAuth\Actions\LoginUserAction => new \Modules\ClassicAuth\Actions\LoginUserAction(
             $app->make(\Illuminate\Support\Timebox::class)
         ));
     }
