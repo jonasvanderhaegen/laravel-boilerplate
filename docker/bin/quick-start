@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Quick start script that builds and sets up HTTPS
+DOMAIN=${1:-laravel.test}
+
+echo "🚀 Quick Laravel HTTPS Setup"
+echo "Domain: $DOMAIN"
+
+# Run the SSL setup
+./docker/bin/setup-ssl "$DOMAIN"

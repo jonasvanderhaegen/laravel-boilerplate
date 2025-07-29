@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Helper script to wait for a container to be healthy/ready
+
+set -o errexit
+
+CONTAINER_NAME="${1:-nginx}"
+MAX_ATTEMPTS="${2:-30}"
+
+# Detect docker-compose command
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo "Error: Neither 'docker-compose' nor 'docker compose' command found."
+    exit 1
+fi
+
+echo "Waiting for $CONTAINER_NAME to be ready..."
+
+ATTEMPT=0
+while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+    if $DOCKER_COMPOSE ps "$CONTAINER_NAME" 2>/dev/null | grep -q "Up\|running\|healthy"; then
+        echo "✅ $CONTAINER_NAME is ready"
+        exit 0
+    fi
+    
+    ATTEMPT=$((ATTEMPT + 1))
+    echo "Waiting... ($ATTEMPT/$MAX_ATTEMPTS)"
+    sleep 2
+done
+
+echo "❌ Timeout waiting for $CONTAINER_NAME"
+exit 1

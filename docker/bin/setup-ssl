@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -o errexit
+
+# Default domain if not specified
+DOMAIN="${1:-laravel.test}"
+
+echo "Generating SSL certificate for domain: $DOMAIN"
+
+# Detect docker-compose command
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo "Error: Neither 'docker-compose' nor 'docker compose' command found."
+    exit 1
+fi
+
+# Ensure nginx container is running
+echo "Ensuring nginx container is running..."
+$DOCKER_COMPOSE up -d nginx
+chmod +x ./docker/bin/wait-for-container 2>/dev/null || true
+if [ -f ./docker/bin/wait-for-container ]; then
+    ./docker/bin/wait-for-container nginx
+else
+    sleep 5
+fi
+
+# Check if CA is already installed in the container
+if ! $DOCKER_COMPOSE exec -T nginx test -f /root/.local/share/mkcert/rootCA.pem; then
+  echo "Certificate authority not found in container. Creating it..."
+  # Just create the CA in the container, don't install on host yet
+  $DOCKER_COMPOSE exec -T nginx sh -c "mkcert -install"
+fi
+
+# Generate certificate in the nginx container
+$DOCKER_COMPOSE exec -T nginx sh -c "cd /etc/nginx/certs && mkcert -key-file cert.key -cert-file cert.crt $DOMAIN *.$DOMAIN localhost 127.0.0.1 ::1"
+
+echo "✅ SSL certificate generated successfully for $DOMAIN"
+echo ""
+echo "Certificate files created:"
+echo "  - /etc/nginx/certs/cert.crt"
+echo "  - /etc/nginx/certs/cert.key"

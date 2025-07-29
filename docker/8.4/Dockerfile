@@ -2,7 +2,8 @@ FROM ubuntu:24.04
 
 LABEL maintainer="Taylor Otwell"
 
-ARG WWWGROUP
+ARG WWWUSER=1000
+ARG WWWGROUP=1000
 ARG NODE_VERSION=22
 ARG MYSQL_CLIENT="mysql-client"
 ARG POSTGRES_VERSION=17
@@ -22,7 +23,7 @@ RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
 
 RUN apt-get update && apt-get upgrade -y \
     && mkdir -p /etc/apt/keyrings \
-    && apt-get install -y gnupg gosu curl ca-certificates zip unzip git supervisor sqlite3 libcap2-bin libpng-dev python3 dnsutils librsvg2-bin fswatch ffmpeg nano  \
+    && apt-get install -y gnupg gosu curl ca-certificates zip unzip git supervisor sqlite3 libcap2-bin libpng-dev python3 dnsutils librsvg2-bin fswatch ffmpeg nano wget libnss3-tools \
     && curl -sS 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xb8dc7e53946656efbce4c1dd71daeaab4ad4cab6' | gpg --dearmor | tee /etc/apt/keyrings/ppa_ondrej_php.gpg > /dev/null \
     && echo "deb [signed-by=/etc/apt/keyrings/ppa_ondrej_php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble main" > /etc/apt/sources.list.d/ppa_ondrej_php.list \
     && apt-get update \
@@ -56,6 +57,13 @@ RUN apt-get update && apt-get upgrade -y \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.4
+
+# Install mkcert with architecture detection
+RUN ARCH=$(dpkg --print-architecture) && \
+    cd /tmp && \
+    wget "https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-${ARCH}" && \
+    chmod +x "mkcert-v1.4.4-linux-${ARCH}" && \
+    mv "mkcert-v1.4.4-linux-${ARCH}" /usr/local/bin/mkcert
 
 RUN userdel -r ubuntu
 RUN groupadd --force -g $WWWGROUP sail

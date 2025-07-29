@@ -1,4 +1,22 @@
 services:
+    nginx:
+        build:
+            context: ./docker/nginx
+            dockerfile: Dockerfile
+        image: laravel-boilerplate-nginx:latest
+        ports:
+            - '${APP_PORT:-80}:80'
+            - '${APP_HTTPS_PORT:-443}:443'
+        environment:
+            APP_DOMAIN: '${APP_DOMAIN:-laravel.test}'
+        volumes:
+            - ./:/var/www/html:delegated
+            - sail-ssl-certs:/etc/nginx/certs
+            - sail-mkcert-ca:/root/.local/share/mkcert
+        networks:
+            - sail
+        depends_on:
+            - laravel.test
     laravel.test:
         build:
             context: ./docker/8.4
@@ -9,7 +27,6 @@ services:
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
-            - '${APP_PORT:-80}:80'
             - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
@@ -17,8 +34,10 @@ services:
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
+            APP_URL: 'https://${APP_DOMAIN:-laravel.test}'
         volumes:
             - ./:/var/www/html:delegated
+            - /var/www/html/node_modules  # Keep container's node_modules isolated
             - ~/.composer/cache:/home/sail/.composer/cache:delegated
         networks:
             - sail
@@ -80,4 +99,8 @@ volumes:
     sail-pgsql-laravel-boilerplate:
         driver: local
     sail-valkey:
+        driver: local
+    sail-ssl-certs:
+        driver: local
+    sail-mkcert-ca:
         driver: local

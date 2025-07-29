@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Docker Compose wrapper script
+# Automatically uses 'docker-compose' or 'docker compose' based on what's available
+
+if command -v docker-compose &> /dev/null; then
+    docker-compose "$@"
+elif docker compose version &> /dev/null 2>&1; then
+    docker compose "$@"
+else
+    echo "Error: Neither 'docker-compose' nor 'docker compose' command found."
+    echo "Please ensure Docker and Docker Compose are properly installed."
+    exit 1
+fi

@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+set -o errexit
+
+echo "Setting up mkcert certificate authority..."
+
+# Detect docker-compose command
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo "Error: Neither 'docker-compose' nor 'docker compose' command found."
+    exit 1
+fi
+
+# Ensure nginx container is running
+echo "Ensuring nginx container is running..."
+$DOCKER_COMPOSE up -d nginx
+chmod +x ./docker/bin/wait-for-container 2>/dev/null || true
+if [ -f ./docker/bin/wait-for-container ]; then
+    ./docker/bin/wait-for-container nginx
+else
+    sleep 5
+fi
+
+# Generate a new local CA in the nginx container
+$DOCKER_COMPOSE exec -T nginx sh -c "mkcert -install"
+
+# Copy the CA certificate from the container
+docker cp "$($DOCKER_COMPOSE ps -q nginx | head -n1)":/root/.local/share/mkcert/rootCA.pem .
+
+echo "System password requested to install certificate authority on host..."
+
+if [ "$(uname)" == "Darwin" ]; then
+  # macOS installation
+  sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain rootCA.pem
+  
+  # Create policies.json for Firefox
+  echo '{"policies": {"Certificates": {"ImportEnterpriseRoots": true}}}' | sudo tee policies.json >/dev/null
+
+  FIREFOX_FOUND=0
+  # Check for Firefox installations
+  for FFoxAppDir in \
+    '/Applications/Firefox.app' \
+    '/Applications/Firefox Developer Edition.app' \
+    ; do
+
+    FFoxBin="$FFoxAppDir/Contents/MacOS/firefox-bin"
+    if [[ -f "$FFoxBin" ]]; then
+      echo "Firefox found at: $FFoxAppDir"
+      FIREFOX_FOUND=1
+
+      # Copy policies.json to Firefox
+      DistDirectory="$FFoxAppDir/Contents/Resources/distribution"
+      sudo mkdir -p "$DistDirectory"
+      sudo cp policies.json "$DistDirectory/policies.json"
+    fi
+  done
+
+  if [[ $FIREFOX_FOUND -ne 0 ]]; then
+    # Install CA certificate for Firefox
+    CertDirectory='/Library/Application Support/Mozilla/Certificates'
+    echo "Installing CA certificate for Firefox to: $CertDirectory"
+    sudo mkdir -p "$CertDirectory"
+    sudo cp rootCA.pem "$CertDirectory/rootCA.pem"
+  fi
+
+  # Clean up
+  rm -f policies.json rootCA.pem
+  
+  echo "✅ Certificate authority installed successfully on macOS"
+
+elif [ "$(uname)" == "Linux" ]; then
+  # Linux installation
+  
+  # Check for libnss3-tools
+  if ! command -v certutil &> /dev/null; then
+    echo "Installing libnss3-tools..."
+    sudo apt-get update && sudo apt-get install -y libnss3-tools
+  fi
+
+  certfile="rootCA.pem"
+  certname="Laravel Boilerplate Local CA"
+
+  # Install for Chrome/Chromium
+  mkdir -p ~/.pki/nssdb
+  certutil -d sql:$HOME/.pki/nssdb -A -t "CT,C,C" -n "$certname" -i "$certfile"
+
+  # Install for Firefox (if exists)
+  if [ -d ~/.mozilla/firefox ]; then
+    for certDB in $(find ~/.mozilla/firefox -name "cert9.db")
+    do
+      certdir=$(dirname "$certDB")
+      certutil -A -n "$certname" -t "TCu,Cu,Tu" -i "$certfile" -d sql:"$certdir"
+    done
+  fi
+
+  # Install system-wide
+  sudo cp rootCA.pem /usr/local/share/ca-certificates/laravel-boilerplate-ca.crt
+  sudo update-ca-certificates
+
+  rm -f rootCA.pem
+  
+  echo "✅ Certificate authority installed successfully on Linux"
+fi
+
+echo ""
+echo "The local certificate authority has been installed on your system."
+echo "You may need to restart your browser for the changes to take effect."

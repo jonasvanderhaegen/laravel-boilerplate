@@ -1,0 +1,13 @@
+# .dockerignore file to prevent copying host node_modules into container
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Also ignore other unnecessary files
+.git
+.gitignore
+.env
+.env.backup
+.env.production
+.DS_Store
+Thumbs.db

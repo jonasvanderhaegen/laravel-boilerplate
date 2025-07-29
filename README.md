@@ -2,6 +2,48 @@
 
 # Laravel Boilerplate
 
+## 🔒 HTTPS Support
+
+This boilerplate includes full HTTPS support with trusted SSL certificates for local development.
+
+### Quick Start with HTTPS
+
+```bash
+# One-command setup with custom domain
+chmod +x setup-https.sh && ./setup-https.sh
+
+# Or use make
+make fresh-start DOMAIN=myapp.test
+```
+
+**Note:** The setup scripts automatically detect whether to use `docker compose` or `docker-compose` based on your Docker installation.
+
+Your app will be available at `https://myapp.test` with a green padlock! 🎉
+
+For detailed SSL setup instructions, see [docker/SSL-README.md](docker/SSL-README.md).
+
+**Important:** Node modules are isolated inside containers. See [docker/NODE_MODULES.md](docker/NODE_MODULES.md) for details.
+
+### Development Commands
+
+**Important:** Always run npm/node commands inside the Docker container to avoid architecture issues.
+
+```bash
+# Run development server
+make dev
+
+# Access container shell
+make shell
+
+# Install dependencies
+make install-deps
+
+# Fix ARM64/M1/M2 node issues
+make fix-node-modules
+```
+
+For more details, see [docker/DEVELOPMENT.md](docker/DEVELOPMENT.md).
+
 An opinionated Laravel starter kit tailored for rapid development, built by Jonas Vanderhaegen. Includes Docker-based setup, Livewire SPA scaffolding, modular architecture, and more.
 
 ## Project-Specific Instructions for AI Assistants
